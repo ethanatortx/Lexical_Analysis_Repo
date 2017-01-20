@@ -39,14 +39,7 @@ public:
 	linked_list(const linked_list<T>&);
 
 	class iterator;
-
-	class const_iterator {
-		Node<T>* n_ref;
-
-	public:
-		friend class linked_list;
-		friend class iterator;
-	};
+	class const_iterator;
 
 	bool empty() const;
 
@@ -76,6 +69,7 @@ public:
 	const_iterator cend() const;
 };
 
+// further iterator definition
 template <class T>
 class linked_list<T>::iterator:
 	virtual public std::iterator<std::forward_iterator_tag, T> 
@@ -98,17 +92,21 @@ public:
 
 	inline iterator& operator=(const iterator& x) 
 	{
-		this->n_ref = x.n_ref; return *this;
+		this->n_ref = x.n_ref;
+		return *this;
 	}
 
 	inline iterator& operator++() 
 	{
-		this->n_ref = this->n_ref->next; return *this;
+		this->n_ref = this->n_ref->next;
+		return *this;
 	}
 
 	inline iterator operator++(int)
 	{
-		iterator tmp(*this); this->n_ref = this->n_ref->next; return tmp;
+		iterator tmp(*this);
+		this->n_ref = this->n_ref->next;
+		return tmp;
 	}
 
 	inline bool operator==(const iterator& x) const 
@@ -133,7 +131,86 @@ public:
 
 	inline iterator& swap(iterator& x) 
 	{
-		Node<T>* tmp(this->n_ref); this->n_ref = x.n_ref; x.n_ref = tmp;
+		Node<T>* tmp(this->n_ref);
+		this->n_ref = x.n_ref;
+		x.n_ref = tmp;
+		return *this;
+	}
+};
+
+template <class T>
+class linked_list<T>::const_iterator:
+	virtual public std::iterator<std::forward_iterator_tag, T>
+{
+
+	const Node<T>* n_ref;
+
+protected:
+	typedef T value_type;
+	typedef T& reference;
+	typedef T* pointer;
+	typedef int difference_type;
+	typedef std::forward_iterator_tag iterator_category;
+
+public:
+	friend class linked_list;
+	friend class iterator;
+
+	const_iterator(const Node* x): n_ref(x) {}
+	const_iterator(const iterator& x): n_ref(x.n_ref) {}
+	const_iterator(const const_iterator& x): n_ref(x.n_ref) {}
+
+	inline const_iterator& operator=(const iterator& x)
+	{
+		n_ref = x.n_ref;
+		return *this;
+	}
+
+	inline const_iterator& operator=(const const_iterator& x)
+	{
+		n_ref = x.n_ref;
+		return *this;
+	}
+
+	inline const_iterator& operator++()
+	{
+		this->n_ref = this->n_ref->next;
+		return *this;
+	}
+
+	inline const_iterator operator++(int)
+	{
+		const_iterator tmp(*this);
+		this->n_ref = this->n_ref->next;
+		return tmp;
+	}
+
+	inline bool operator==(const const_iterator& x) const
+	{
+		return this->n_ref == x.n_ref;
+	}
+
+	inline bool operator!=(const const_iterator& x) const
+	{
+		return this->n_ref != x.n_ref;
+	}
+
+	inline typename linked_list<T>::const_iterator::reference operator*() const
+	{
+		return this->n_ref->data;
+	}
+
+	inline typename linked_list<T>::const_iterator::pointer operator->() const
+	{
+		return this->n_ref;
+	}
+
+	inline const_iterator& swap(const_iterator& x)
+	{
+		Node<T>* tmp(this->n_ref);
+		this->n_ref = x.n_ref;
+		x.n_ref = tmp;
+		return *this;
 	}
 };
 
