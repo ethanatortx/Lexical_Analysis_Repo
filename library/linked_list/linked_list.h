@@ -8,18 +8,18 @@
 template <class T>
 class Node {
 
-	T data;
-	Node* next;
+	T Data;
+	Node* Next;
 
 public:
 
-	Node(const T& x, Node* y = nullptr): data(x), next(y) {}
+	Node(const T& x, Node* y = 0): Data(x), Next(y) {}
 
-	inline void set_date(const T& x) { data = x; }
-	inline void set_next(Node* x) { next = x; }
+	inline void set_date(const T& x) { Data = x; }
+	inline void set_next(Node* x) { Next = x; }
 
-	inline T data() const { return data; }
-	inline Node* next() const { return next; }
+	inline T data() { return Data; }
+	inline Node* next() { return Next; }
 };
 
 // singly linked lists
@@ -156,7 +156,7 @@ public:
 	friend class linked_list;
 	friend class iterator;
 
-	const_iterator(const Node* x): n_ref(x) {}
+	const_iterator(const Node<T>* x): n_ref(x) {}
 	const_iterator(const iterator& x): n_ref(x.n_ref) {}
 	const_iterator(const const_iterator& x): n_ref(x.n_ref) {}
 
