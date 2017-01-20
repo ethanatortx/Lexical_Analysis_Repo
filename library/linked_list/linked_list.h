@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <utility>
+#include <iterator>
 
 template <class T>
 class Node {
@@ -37,14 +38,8 @@ public:
 	linked_list();
 	linked_list(const linked_list<T>&);
 
-	class iterator {
-		Node<T>* n_ref;
+	class iterator;
 
-	public:
-		friend class linked_list;
-		friend class const_iterator;
-	};
-	
 	class const_iterator {
 		Node<T>* n_ref;
 
@@ -79,6 +74,67 @@ public:
 	iterator end();
 	const_iterator end() const;
 	const_iterator cend() const;
+};
+
+template <class T>
+class linked_list<T>::iterator:
+	virtual public std::iterator<std::forward_iterator_tag, T> 
+{	
+	Node<T>* n_ref;
+
+protected:
+	typedef T value_type;
+	typedef T& reference;
+	typedef T* pointer;
+	typedef int difference_type;
+	typedef std::forward_iterator_tag iterator_category;
+
+public:
+	friend class linked_list;
+	friend class const_iterator;
+
+	iterator(Node<T>* x = nullptr): n_ref(x) {}
+	iterator(const iterator& x): n_ref(x.n_ref) {}
+
+	inline iterator& operator=(const iterator& x) 
+	{
+		this->n_ref = x.n_ref; return *this;
+	}
+
+	inline iterator& operator++() 
+	{
+		this->n_ref = this->n_ref->next; return *this;
+	}
+
+	inline iterator operator++(int)
+	{
+		iterator tmp(*this); this->n_ref = this->n_ref->next; return tmp;
+	}
+
+	inline bool operator==(const iterator& x) const 
+	{
+		return this->n_ref == x.n_ref;
+	}
+
+	inline bool operator!=(const iterator& x) const 
+	{
+		return this->n_ref != x.n_ref;
+	}
+
+	inline typename linked_list<T>::iterator::reference operator*() const 
+	{
+		return this->n_ref->data();
+	}
+
+	inline typename linked_list<T>::iterator::pointer operator->() const 
+	{
+		return this->n_ref;
+	}
+
+	inline iterator& swap(iterator& x) 
+	{
+		Node<T>* tmp(this->n_ref); this->n_ref = x.n_ref; x.n_ref = tmp;
+	}
 };
 
 #endif
