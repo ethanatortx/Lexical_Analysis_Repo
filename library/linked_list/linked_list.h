@@ -38,6 +38,7 @@ public:
 	linked_list();
 	linked_list(const linked_list<T>&);
 
+	// iterator pre-declaration
 	class iterator;
 	class const_iterator;
 
@@ -48,16 +49,20 @@ public:
 	void operator=(const linked_list<T>&);
 	void operator=(linked_list<T>&&);
 
-	bool operator==(const linked_list<T>&) const;
-	bool operator!=(const linked_list<T>&) const;
+	inline bool operator==(const linked_list<T>& rhs) const { return this->head == rhs.head; }
+	inline bool operator!=(const linked_list<T>& rhs) const { return this->head != rhs.head; }
 
+	// push element to front
 	void push_back(const T&);
 	void push_back(T&&);
 
+	// erase element at front and pull list forwards
 	void pop();
 
+	// erase element at position
 	void erase(int);
 
+	// erase a range of elements from [lhs, rhs)
 	void erase_range(int, int);
 
 	iterator begin();
@@ -69,7 +74,21 @@ public:
 	const_iterator cend() const;
 };
 
-// further iterator definition
+template <class T>
+bool linked_list<T>::empty() const
+{
+	return this->head == NULL;
+}
+
+template <class T>
+void linked_list<T>::clear() {
+
+	Node<T>* p = head;
+
+	
+}
+
+// iterator definition
 template <class T>
 class linked_list<T>::iterator:
 	virtual public std::iterator<std::forward_iterator_tag, T> 
@@ -138,6 +157,7 @@ public:
 	}
 };
 
+// constant iterator definition
 template <class T>
 class linked_list<T>::const_iterator:
 	virtual public std::iterator<std::forward_iterator_tag, T>
