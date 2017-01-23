@@ -4,6 +4,7 @@
 #include <iostream>
 #include <utility>
 #include <iterator>
+#include <string>
 
 template <class T>
 class Node {
@@ -35,7 +36,7 @@ private:
 	Node<T>* head;
 
 public:
-	linked_list();
+	linked_list(): head(0) {}
 	linked_list(const linked_list<T>&);
 
 	// iterator pre-declaration
@@ -49,6 +50,8 @@ public:
 	linked_list<T>& operator=(const linked_list<T>&);
 	linked_list<T>& operator=(linked_list<T>&&);
 
+	iterator operator[](int);
+
 	inline bool operator==(const linked_list<T>& rhs) const { return this->head == rhs.head; }
 	inline bool operator!=(const linked_list<T>& rhs) const { return this->head != rhs.head; }
 
@@ -57,22 +60,22 @@ public:
 	void push_back(T&&);
 
 	// create and insert node at index
-	void emplace(const T&, int);
-	void emplace(const T&, const_iterator&);
+	void emplace_after(const T&, int);
+	void emplace_after(const T&, iterator);
 
-	void emplace(T&&, int);
-	void emplace(T&&, const_iterator&);
+	void emplace_after(T&&, int);
+	void emplace_after(T&&, iterator);
 
-	// erase element at front and pull list forwards
+	// erase_after element at front and pull list forwards
 	void pop();
 
-	// erase element at position
-	void erase(int);
-	void erase(iterator&);
+	// erase_after element at position
+	void erase_after(int);
+	void erase_after(iterator);
 
-	// erase a range of elements from [lhs, rhs)
+	// erase_after a range of elements from [lhs, rhs)
 	void erase_range(int, int);
-	void erase_range(iterator&, iterator&);
+	void erase_range(iterator, iterator);
 
 	iterator begin();
 	const_iterator begin() const;
@@ -81,7 +84,21 @@ public:
 	iterator end();
 	const_iterator end() const;
 	const_iterator cend() const;
+
+	void print();
 };
+
+template <class T>
+linked_list<T>::linked_list(const linked_list<T>& list)
+{
+
+	linked_list<T>::iterator other = list.begin();
+	while(other)
+	{
+		this->insert((*other).data(), this->end());
+		other++;
+	}
+}
 
 template <class T>
 bool linked_list<T>::empty() const
@@ -128,10 +145,26 @@ linked_list<T>& linked_list<T>::operator=(linked_list<T>&& L)
 }
 
 template <class T>
+typename linked_list<T>::iterator linked_list<T>::operator[](int pos)
+{
+	linked_list<T>::iterator* it = new linked_list<T>::iterator(this->begin());
+
+	if(!pos) return *it;
+
+	while(pos)
+	{
+		pos--;
+		it++;
+	}
+
+	return *it;
+}
+
+template <class T>
 void linked_list<T>::push_back(const T& data) 
 {
 	Node<T>* n = new Node<T>(data);
-	n->next = head;
+	n->set_next(head);
 	head = n;
 }
 
@@ -139,72 +172,74 @@ template <class T>
 void linked_list<T>::push_back(T&& data) 
 {
 	Node<T>* n = new Node<T>(data);
-	n->next = head;
+	n->set_next(head);
 	head = n;
 }
 
 template <class T>
-void linked_list<T>::emplace(const T& data, int pos) 
+void linked_list<T>::emplace_after(const T& data, int pos) 
 {
 
 	if(!pos) this->push_back(data); return;
 
 	Node<T>* n = new Node<T>(data);
 
-	linked_list<T>::iterator it = this->begin();
+	linked_list<T>::iterator it;
 
-	while(pos) {
+	while(pos > 0)
+	{
+
 		pos--;
 		it++;
 	}
 
-	n->next = it->next;
-	it->next = n;
+	n->set_next(it->next());
+	it->set_next(n);
 }
 
 template <class T>
-void linked_list<T>::emplace(const T& data, iterator& it) 
+void linked_list<T>::emplace_after(const T& data, iterator it) 
+{
+
+	if(it == this->begin()) this->push_back(data); return;
+
+	Node<T>* n = new Node<T>(data);
+
+	n->set_next(it->next());
+	it->set_next(n);
+}
+
+template <class T>
+void linked_list<T>::emplace_after(T&& data, int pos) 
+{
+
+
+	if(!pos) { this->push_back(data); return; }
+
+	Node<T>* n = new Node<T>(data);
+
+	linked_list<T>::iterator it = this->begin();
+
+	while(pos)
+	{
+		pos--;
+		it++;
+	}
+
+	n->set_next(it->next());
+	it->set_next(n);
+}
+
+template <class T>
+void linked_list<T>::emplace_after(T&& data, iterator it) 
 {
 
 	if(it == this->begin()) this->push_back(data);
 
 	Node<T>* n = new Node<T>(data);
 
-	n->next = it->next;
-	it->next = n;
-}
-
-template <class T>
-void linked_list<T>::emplace(T&& data, int pos) 
-{
-
-	if(this->empty()) return;
-
-	Node<T>* n = new Node<T>(data);
-
-	if(!pos) n->next = this->head; this->head = n; return;
-
-	linked_list<T>::iterator it = this->begin();
-
-	while(pos) {
-		pos--;
-		it++;
-	}
-
-	n->next = it->next;
-	it->next = n;
-}
-
-template <class T>
-void linked_list<T>::emplace(T&& data, iterator& it) 
-{
-
-	if(it == this->begin()) this->push_back(data);
-
-	Node<T>* n = new Node<T>(data);
-
-	n->next = it->next;
-	it->next = n;
+	n->set_next(it->next());
+	it->set_next(n);
 }
 
 template <class T>
@@ -212,72 +247,136 @@ void linked_list<T>::pop()
 {
 
 	Node<T>* n = head;
-	head = head->next;
+	head = head->next();
 	delete n;
 }
 
 template <class T>
-void linked_list<T>::erase(int pos)
+void linked_list<T>::erase_after(int pos)
 {
 
+	if(!pos) this->pop(); return;
 
+	Node<T>* n;
+
+	linked_list<T>::iterator it = (*this)[pos];
+
+	n = it->next();
+	it->set_next(it->next()->next());
+	delete n;
 }
 
 template <class T>
-void linked_list<T>::erase(iterator& it)
+void linked_list<T>::erase_after(iterator it)
 {
 
+	if(it == this->begin()) this->pop(); return;
 
+	Node<T>* n;
+
+	n = it->next();
+	it->set_next(it->next()->next());
+	delete n;
 }
 
 template <class T>
 void linked_list<T>::erase_range(int lhs, int rhs)
 {
 
+	linked_list<T>::iterator begin = (*this)[lhs];
+	linked_list<T>::iterator end = (*this)[rhs];
 
+	while(begin->next() != end)
+	{
+		Node<T>* n = *begin;
+		begin++;
+		delete n;
+	}
 }
 
 template <class T>
-void linked_list<T>::erase_range(iterator& lhs, iterator& rhs)
+void linked_list<T>::erase_range(iterator lhs, iterator rhs)
 {
 
-
+	while(lhs->next() != rhs)
+	{
+		Node<T>* n = *lhs;
+		lhs++;
+		delete n;
+	}
 }
 
 template <class T>
-linked_list<T>::iterator linked_list<T>::begin()
+typename linked_list<T>::iterator linked_list<T>::begin()
 {
 
+	linked_list<T>::iterator* it = new linked_list<T>::iterator(head);
+	return *it;
 }
 
 template <class T>
-linked_list<T>::const_iterator linked_list<T>::begin() const
+typename linked_list<T>::const_iterator linked_list<T>::begin() const
 {
 
+	const linked_list<T>::const_iterator* it = new linked_list<T>::const_iterator(head);
+	return *it;
 }
 
 template <class T>
-linked_list<T>::const_iterator linked_list<T>::cbegin() const
+typename linked_list<T>::const_iterator linked_list<T>::cbegin() const
 {
 
+	const linked_list<T>::const_iterator* it = new linked_list<T>::const_iterator(head);
+	return *it;
 }
 
 template <class T>
-linked_list<T>::iterator linked_list<T>::end()
+typename linked_list<T>::iterator linked_list<T>::end()
 {
 
+	linked_list<T>::iterator it = this->begin();
+	while(it->next())
+	{
+		it++;
+	}
+	return it;
 }
 
 template <class T>
-linked_list<T>::const_iterator linked_list<T>::end() const
+typename linked_list<T>::const_iterator linked_list<T>::end() const
 {
 
+	const linked_list<T>::const_iterator it = this->cbegin();
+	while(it->next())
+	{
+		it++;
+	}
+	return it;
 }
 
 template <class T>
-linked_list<T>::const_iterator linked_list<T>::cend() const
+typename linked_list<T>::const_iterator linked_list<T>::cend() const
 {
-	
+
+	const linked_list<T>::const_iterator it = this->cbegin();
+	while(it->next())
+	{
+		it++;
+	}
+	return it;
+}
+
+template <class T>
+void linked_list<T>::print() 
+{
+
+	linked_list<T>::iterator it = this->begin();
+	while(it->next()) 
+	{
+		std::cout<< *it <<std::endl;
+		it++;
+	}
+	std::cout<< *it <<std::endl;
 }
 
 // iterator definition
@@ -290,7 +389,7 @@ class linked_list<T>::iterator:
 protected:
 	typedef T value_type;
 	typedef T& reference;
-	typedef T* pointer;
+	typedef Node<T>* pointer;
 	typedef int difference_type;
 	typedef std::forward_iterator_tag iterator_category;
 
@@ -309,14 +408,14 @@ public:
 
 	inline iterator& operator++() 
 	{
-		this->n_ref = this->n_ref->next;
+		this->n_ref = this->n_ref->next();
 		return *this;
 	}
 
 	inline iterator operator++(int)
 	{
 		iterator tmp(*this);
-		this->n_ref = this->n_ref->next;
+		this->n_ref = this->n_ref->next();
 		return tmp;
 	}
 
@@ -330,7 +429,7 @@ public:
 		return this->n_ref != x.n_ref;
 	}
 
-	inline typename linked_list<T>::iterator::reference operator*() const 
+	inline typename linked_list<T>::iterator::value_type operator*() const 
 	{
 		return this->n_ref->data();
 	}
@@ -358,9 +457,9 @@ class linked_list<T>::const_iterator:
 	const Node<T>* n_ref;
 
 protected:
-	typedef T value_type;
-	typedef T& reference;
-	typedef T* pointer;
+	const typedef T value_type;
+	const typedef T& reference;
+	const typedef Node<T>* pointer;
 	typedef int difference_type;
 	typedef std::forward_iterator_tag iterator_category;
 
@@ -386,14 +485,14 @@ public:
 
 	inline const_iterator& operator++()
 	{
-		this->n_ref = this->n_ref->next;
+		this->n_ref = this->n_ref->next();
 		return *this;
 	}
 
 	inline const_iterator operator++(int)
 	{
 		const_iterator tmp(*this);
-		this->n_ref = this->n_ref->next;
+		this->n_ref = this->n_ref->next();
 		return tmp;
 	}
 
@@ -407,9 +506,9 @@ public:
 		return this->n_ref != x.n_ref;
 	}
 
-	inline typename linked_list<T>::const_iterator::reference operator*() const
+	inline typename linked_list<T>::const_iterator::value_type operator*() const
 	{
-		return this->n_ref->data;
+		return this->n_ref->data();
 	}
 
 	inline typename linked_list<T>::const_iterator::pointer operator->() const
