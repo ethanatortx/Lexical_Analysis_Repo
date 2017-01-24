@@ -45,6 +45,9 @@ public:
 	linked_list<T>& operator=(const linked_list<T>&);
 	linked_list<T>& operator=(linked_list<T>&&);
 
+	linked_list<T>& operator+=(const linked_list<T>&);
+	linked_list<T>& operator+=(linked_list<T>&&);
+
 	// get iterator to element at position
 	iterator operator[](int);
 	iterator at(int);
@@ -53,8 +56,8 @@ public:
 	inline bool empty() const { return this->tail == this->tail->next; }
 
 	// get value of element at front
-	inline T& front() { return *begin(); }
-	inline const T& front() const { return *begin(); }
+	inline T& front() { return *(this->begin()); }
+	inline const T& front() const { return *(this->begin()); }
 
 	// get iterator at front of list
 	inline iterator begin() { return iterator(tail->next); }
@@ -62,8 +65,8 @@ public:
 	inline const_iterator cbegin() const { return const_iterator(tail->next); }
 
 	// get value of element at end
-	inline T& back() { return *end(); }
-	inline const T& back() { return *end(); }
+	inline T& back() { return *(this->end()); }
+	inline const T& back() { return *(this->end()); }
 
 	// get iterator at end of list
 	inline iterator end() { return iterator(tail); }
@@ -78,8 +81,11 @@ public:
 	void emplace(T&&, iterator);
 
 	// append value to front
-	void push_back(const T&);
-	void push_back(T&&);
+	inline void push_back(const T&) { this->emplace(x, this->begin()); }
+	inline void push_back(T&&) { this->emplace(x, this->begin()); }
+
+	inline void append(const T&) { this->emplace(x, this->end()); }
+	inline void append(T&&) { this->emplace(x, this->end()); }
 
 	// erase element at position
 	void erase(int);
@@ -88,6 +94,9 @@ public:
 	// erase elements from [lhs, rhs)
 	void erase_range(int, int);
 	void erase_range(iterator, iterator);
+
+	// erase first element
+	inline void pop() { this->erase(this->begin()); }
 
 	// print list to console
 	void print();
@@ -111,51 +120,70 @@ public:
 template <class T>
 void linked_list<T>::clear()
 {
-	while(!empty()) { pop(); }
+	while(!(this->empty())) { this->pop(); }
 }
 
 template <class T>
-typename linked_list<T>& linked_list<T>::operator=(const linked_list<T>& other)
+linked_list<T>& linked_list<T>::operator=(const linked_list<T>& other)
 {
-	linked_list<T>::iterator it(other.head);
-	
-	clear();
-	
-	while(it->next != other.tail) {
-		push_back(*it);
+	linked_list<T> temp(other);
+	this->swap(temp);
+	return *this;
+}
+
+template <class T>
+linked_list<T>& linked_list<T>::operator=(linked_list<T>&& other)
+{
+	linked_list<T> temp(other);
+	this->swap(temp);
+	return *this;
+}
+
+template <class T>
+linked_list<T>& linked_list<T>::operator+=(const linked_list<T>& other)
+{
+	linked_list<T>::iterator q = other.begin();
+
+	while(q != other.end())
+	{
+		this->append(*q);
 	}
 
-	reverse();
+	return *this;
+
 }
 
 template <class T>
-typename linked_list<T>& linked_list<T>::operator=(linked_list<T>&& other)
+linked_list<T>& linked_list<T>::operator+=(linked_list<T>&& other)
 {
-	linked_list<T>::iterator it(other.head);
+	linked_list<T>::iterator q = other.begin();
 
-	clear();
-
-	while(it->next != other.tail) {
-		push_back(*it);
+	while(q != other.end())
+	{
+		this->append(*q);
 	}
 
-	reverse();
+	return *this;
 }
 
 template <class T>
-typename linked_list<T>::iterator operator[](int)
+typename linked_list<T>::iterator linked_list<T>::at(int pos)
 {
 	linked_list<T>::iterator it = this->begin();
-	while(it->next) {
-
-	};
+	while(pos)
+	{
+		it++;
+		pos--;
+	}
+	return it;
 }
 
 template <class T>
-typename linked_list<T>::iterator at(int pos)
+typename linked_list<T>::iterator linked_list<T>::operator[](int pos)
 {
 	linked_list<T>::iterator it = this->begin();
-	while (pos){
+	while(pos)
+	{
 		it++;
 		pos--;
 	}
@@ -165,83 +193,137 @@ typename linked_list<T>::iterator at(int pos)
 template <class T>
 void linked_list<T>::emplace(const T& data, int pos)
 {
-
+	linked_list<T>::iterator = this->at(pos);
+	linked_list<T>::Node* temp = new Node(data, it.nref->next);
+	if(it.nref == tail) tail = temp;
+	it.nref->next = temp;
 }
 
 template <class T>
 void linked_list<T>::emplace(const T& data, typename linked_list<T>::iterator pos)
 {
-
+	linked_list<T>::Node* temp = new Node(data, pos.nref->next);
+	if(it.nref == tail) tail = temp;
+	it.nref->next = temp;
 }
 
 template <class T>
 void linked_list<T>::emplace(T&& data, int pos)
 {
-
+	linked_list<T>::iterator = this->at(pos);
+	linked_list<T>::Node* temp = new Node(data, it.nref->next);
+	if(it.nref == tail) tail = temp;
+	it.nref->next = temp;	
 }
 
 template <class T>
 void linked_list<T>::emplace(T&& data, typename linked_list<T>::iterator pos)
 {
-
-}
-
-template <class T>
-void linked_list<T>::push_back(const T& data)
-{
-	linked_list<T>::Node* n = new Node(data);
-	n->next = this->head;
-	this->head = n;
-}
-
-template <class T>
-void linked_list<T>::push_back(T&& data)
-{
-	linked_list<T>::Node* n = new Node(data);
-	n->next = this->head;
-	this->head = n;
+	linked_list<T>::Node* temp = new Node(data, pos.nref->next);
+	if(it.nref == tail) tail = temp;
+	it.nref->next = temp;
 }
 
 template <class T>
 void linked_list<T>::erase(int pos)
 {
 	linked_list<T>::iterator it = this->at(pos);
+	if(it == this->end()) return;
+	if(it.nref->next == tail) tail = it.nref;
+	Node* temp = it.ref->next;
+	it.ref->next = it.ref->next->next;
+	delete temp;
 }
 
 template <class T>
 void linked_list<T>::erase(typename linked_list<T>::iterator pos)
 {
-
+	if(pos == this->end()) return;
+	if(pos.nref->next == tail) tail = pos.nref;
+	Node* temp = pos.ref->next;
+	pos.ref->next = pos.ref->next->next;
+	delete temp;
 }
 
 template <class T>
 void linked_list<T>::erase_range(int lhs, int rhs)
 {
+	linked_list<T>::iterator l, r, current;
+	l = this->at(lhs);
+	r = this->at(rhs);
 
+	while(l->next != r.nref)
+	{
+		current = l;
+		l++;
+		this->erase(current);
+	}
 }
 
 template <class T>
 void linked_list<T>::erase_range(typename linked_list<T>::iterator lhs, typename linked_list<T>::iterator rhs)
 {
+	linked_list<T>::iterator current;
 
+	while(lhs->next != rhs.nref)
+	{
+		current = lhs;
+		lhs++;
+		this->erase(current);
+	}
 }
 
 template <class T>
-void linked_list<T>::rotate(int pos)
+void linked_list<T>::print()
 {
-
-}
-
-template <class T>
-void linked_list<T>::rotate(typename linked_list<T>::iterator it)
-{
-
+	linked_list<T>::iterator it = this->begin();
+	while(it != this->end())
+	{
+		std::cout<< *it << std::endl;
+		it++;
+	}
 }
 
 template <class T>
 void linked_list<T>::reverse()
 {
+	if (empty()) { return; }
 
+	Node* new_tail = tail->next->next;
+	Node* i = tail->next;
+	Node* p = tail;
+	Node* n;
+
+	do {
+		n = i->next;
+		i->next = p;
+		p = i;
+		i = n;
+	} while (p != tail);
+	tail = new_tail;
+}
+
+template <class T>
+void linked_list<T>::rotate(int pos)
+{
+	linked_list<T>::iterator it = this->at(pos);
+	if (it == end()) return;
+	Node* sent = tail->next;
+	tail->next = tail->next->next;
+	sent->next = it.ref->next;
+	it.ref->next = sent;
+	tail = it.ref;
+}
+
+template <class T>
+void linked_list<T>::rotate(typename linked_list<T>::iterator pos)
+{
+	if (pos == end()) return;
+	Node* sent = tail->next;
+	tail->next = tail->next->next;
+	sent->next = pos.nref->next;
+	pos.nref->next = sent;
+	tail = pos.nref;
 }
 
 /*
