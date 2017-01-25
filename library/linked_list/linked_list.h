@@ -79,12 +79,12 @@ public:
 	void emplace(T&&, int);
 	void emplace(T&&, iterator);
 
-	// append value to front
-	inline void push_back(const T& x) { this->emplace(x, this->begin()); }
-	inline void push_back(T&& x) { this->emplace(x, this->begin()); }
+	// Append value to front
+	inline void push_front(const T& x) { this->emplace(x, this->begin()); }
+	inline void push_front(T&& x) { this->emplace(x, this->begin()); }
 
-	inline void append(const T& x) { this->emplace(x, this->end()); }
-	inline void append(T&& x) { this->emplace(x, this->end()); }
+	inline void push_back(const T& x) { this->emplace(x, this->end()); }
+	inline void push_back(T&& x) { this->emplace(x, this->end()); }
 
 	// erase element at position
 	void erase(int);
@@ -147,7 +147,7 @@ linked_list<T>& linked_list<T>::operator+=(const linked_list<T>& other)
 
 	while(it != other.end())
 	{
-		this->append(*it);
+		this->push_back(*it);
 		++it;
 	}
 

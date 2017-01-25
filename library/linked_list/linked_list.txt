@@ -81,11 +81,11 @@ void emplace(const T&, int)
 	Construct and emplace a node with the given data at the
 	given position
 
-inline void push_back(const T&)
+inline void push_front(const T&)
 					 (T&&)
 	Construct and emplace node at the front of the list
 
-inline void addend(const T&)
+inline void push_back(const T&)
 				  (T&&)
 	Construct and empalce node at the end of the list
 

@@ -6,8 +6,8 @@ int main() {
 	linked_list<int> list;
 
 	std::cout<< "\nPushing numbers to list 1";
-	list.push_back(20);
-	list.push_back(5);
+	list.push_front(20);
+	list.push_front(5);
 
 	std::cout<< "\nList 1: " << std::endl;
 	list.print();
@@ -15,7 +15,7 @@ int main() {
 	std::cout<< "\nReverse list 1";
 	list.reverse();
 	std::cout<< "\nAppend number to list 1";
-	list.append(50);
+	list.push_back(50);
 
 	std::cout<< "\nList 1: " << std::endl;
 	list.print();
@@ -23,8 +23,8 @@ int main() {
 	linked_list<int> list_2;
 
 	std::cout<< "\nPushing numbers to list 2";
-	list_2.push_back(500);
-	list_2.push_back(34);
+	list_2.push_front(500);
+	list_2.push_front(34);
 	std::cout<< "\nEmplacing number at fourth term in list 2";
 	list_2.emplace(20, 1);
 
@@ -43,8 +43,8 @@ int main() {
 	list.print();
 
 	std::cout<< "\nPush numbers to beginning and end of list 1";
-	list.append(20);
-	list.push_back(30);
+	list.push_back(20);
+	list.push_front(30);
 
 	std::cout<< "\nList 1: " << std::endl;
 	list.print();
