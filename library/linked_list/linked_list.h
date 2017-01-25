@@ -46,7 +46,6 @@ public:
 	linked_list<T>& operator=(linked_list<T>&&);
 
 	linked_list<T>& operator+=(const linked_list<T>&);
-	linked_list<T>& operator+=(linked_list<T>&&);
 
 	// get iterator to element at position
 	iterator operator[](int);
@@ -61,17 +60,17 @@ public:
 
 	// get iterator at front of list
 	inline iterator begin() { return iterator(tail->next); }
-	inline const_iterator begin() const { return const_iterator(tail->next); }
-	inline const_iterator cbegin() const { return const_iterator(tail->next); }
+	inline const const_iterator begin() const { return const_iterator(tail->next); }
+	inline const const_iterator cbegin() const { return const_iterator(tail->next); }
 
 	// get value of element at end
 	inline T& back() { return *(this->end()); }
-	inline const T& back() { return *(this->end()); }
+	inline const T& back() const { return *(this->end()); }
 
 	// get iterator at end of list
 	inline iterator end() { return iterator(tail); }
-	inline const_iterator end() const { return const_iterator(tail); }
-	inline const_iterator cend() const { return const_iterator(tail); }
+	inline const const_iterator end() const { return const_iterator(tail); }
+	inline const const_iterator cend() const { return const_iterator(tail); }
 
 	// construct and insert element at position
 	void emplace(const T&, int);
@@ -81,11 +80,11 @@ public:
 	void emplace(T&&, iterator);
 
 	// append value to front
-	inline void push_back(const T&) { this->emplace(x, this->begin()); }
-	inline void push_back(T&&) { this->emplace(x, this->begin()); }
+	inline void push_back(const T& x) { this->emplace(x, this->begin()); }
+	inline void push_back(T&& x) { this->emplace(x, this->begin()); }
 
-	inline void append(const T&) { this->emplace(x, this->end()); }
-	inline void append(T&&) { this->emplace(x, this->end()); }
+	inline void append(const T& x) { this->emplace(x, this->end()); }
+	inline void append(T&& x) { this->emplace(x, this->end()); }
 
 	// erase element at position
 	void erase(int);
@@ -115,6 +114,8 @@ public:
 		this->tail = other.tail;
 		other.tail = n;
 	}
+
+	~linked_list() { clear(); delete tail; }
 };
 
 template <class T>
@@ -142,25 +143,12 @@ linked_list<T>& linked_list<T>::operator=(linked_list<T>&& other)
 template <class T>
 linked_list<T>& linked_list<T>::operator+=(const linked_list<T>& other)
 {
-	linked_list<T>::iterator q = other.begin();
+	const linked_list<T>::const_iterator& it = other.begin();
 
-	while(q != other.end())
+	while(it != other.end())
 	{
-		this->append(*q);
-	}
-
-	return *this;
-
-}
-
-template <class T>
-linked_list<T>& linked_list<T>::operator+=(linked_list<T>&& other)
-{
-	linked_list<T>::iterator q = other.begin();
-
-	while(q != other.end())
-	{
-		this->append(*q);
+		this->append(*it);
+		++it;
 	}
 
 	return *this;
@@ -193,7 +181,7 @@ typename linked_list<T>::iterator linked_list<T>::operator[](int pos)
 template <class T>
 void linked_list<T>::emplace(const T& data, int pos)
 {
-	linked_list<T>::iterator = this->at(pos);
+	linked_list<T>::iterator it = this->at(pos);
 	linked_list<T>::Node* temp = new Node(data, it.nref->next);
 	if(it.nref == tail) tail = temp;
 	it.nref->next = temp;
@@ -203,14 +191,14 @@ template <class T>
 void linked_list<T>::emplace(const T& data, typename linked_list<T>::iterator pos)
 {
 	linked_list<T>::Node* temp = new Node(data, pos.nref->next);
-	if(it.nref == tail) tail = temp;
-	it.nref->next = temp;
+	if(pos.nref == tail) tail = temp;
+	pos.nref->next = temp;
 }
 
 template <class T>
 void linked_list<T>::emplace(T&& data, int pos)
 {
-	linked_list<T>::iterator = this->at(pos);
+	linked_list<T>::iterator it = this->at(pos);
 	linked_list<T>::Node* temp = new Node(data, it.nref->next);
 	if(it.nref == tail) tail = temp;
 	it.nref->next = temp;	
@@ -220,8 +208,8 @@ template <class T>
 void linked_list<T>::emplace(T&& data, typename linked_list<T>::iterator pos)
 {
 	linked_list<T>::Node* temp = new Node(data, pos.nref->next);
-	if(it.nref == tail) tail = temp;
-	it.nref->next = temp;
+	if(pos.nref == tail) tail = temp;
+	pos.nref->next = temp;
 }
 
 template <class T>
@@ -240,8 +228,8 @@ void linked_list<T>::erase(typename linked_list<T>::iterator pos)
 {
 	if(pos == this->end()) return;
 	if(pos.nref->next == tail) tail = pos.nref;
-	Node* temp = pos.ref->next;
-	pos.ref->next = pos.ref->next->next;
+	Node* temp = pos.nref->next;
+	pos.nref->next = pos.nref->next->next;
 	delete temp;
 }
 
@@ -310,9 +298,9 @@ void linked_list<T>::rotate(int pos)
 	if (it == end()) return;
 	Node* sent = tail->next;
 	tail->next = tail->next->next;
-	sent->next = it.ref->next;
-	it.ref->next = sent;
-	tail = it.ref;
+	sent->next = it.nref->next;
+	it.nref->next = sent;
+	tail = it.nref;
 }
 
 template <class T>
@@ -431,30 +419,32 @@ protected:
 	friend class linked_list<T>::iterator;
 
 private:
-	const Node* nref;
+	mutable Node* nref;
 
 public:
-	const_iterator(const Node* n = 0): nref(n) {}
-	const_iterator(typename linked_list<T>::iterator& other): nref(other.nref) {}
-	const_iterator(typename linked_list<T>::const_iterator& other): nref(other.nref) {}
+	const_iterator(Node* n = 0): nref(n) {}
+	const_iterator(const typename linked_list<T>::iterator& other): nref(other.nref) {}
+	const_iterator(const typename linked_list<T>::const_iterator& other): nref(other.nref) {}
 
-	inline typename linked_list<T>::const_iterator& operator=(const typename linked_list<T>::iterator& other)
+	inline typename linked_list<T>::const_iterator& operator=(const typename linked_list<T>::iterator& other) const
 	{
 		this->nref = other.nref;
-	}
-
-	inline typename linked_list<T>::const_iterator& operator=(const typename linked_list<T>::const_iterator& other)
-	{
-		this->nref = other.nref;
-	}
-
-	inline typename linked_list<T>::const_iterator& operator++()
-	{
-		this->nref = this->nref->next;
 		return *this;
 	}
 
-	inline typename linked_list<T>::const_iterator operator++(int)
+	inline typename linked_list<T>::const_iterator& operator=(const typename linked_list<T>::const_iterator& other) const
+	{
+		this->nref = other.nref;
+		return *this;
+	}
+
+	inline typename linked_list<T>::const_iterator operator++() const
+	{
+		nref = nref->next;
+		return *this;
+	}
+
+	inline typename linked_list<T>::const_iterator operator++(int) const
 	{
 		typename linked_list<T>::const_iterator tmp(*this);
 		this->nref = this->nref->next;
