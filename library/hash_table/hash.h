@@ -389,6 +389,26 @@ namespace hash
 				sprintf(buf+i*2, "%02x", digest[i]);
 			return std::string(buf);
 		}
+
+		template <class type, class hash_alg = hash::algorithm::SHA256>
+		std::string hash(const type& key)
+		{
+			std::string input = std::string(reinterpret_cast<std::string>(key));
+
+			unsigned char digest[hash_alg::DIGEST_SIZE];
+			memset(digest,0,hash_alg::DIGEST_SIZE);
+			
+			hash_alg ctx = hash_alg();
+			ctx.init();
+			ctx.update((unsigned char*)input.c_str(), input.length());
+			ctx.final(digest);
+		 
+			char buf[2*hash_alg::DIGEST_SIZE+1];
+			buf[2*hash_alg::DIGEST_SIZE] = 0;
+			for (int i = 0; i < hash_alg::DIGEST_SIZE; i++)
+				sprintf(buf+i*2, "%02x", digest[i]);
+			return std::string(buf);
+		}
 	}
 
 	namespace error
@@ -413,11 +433,11 @@ namespace hash
 		struct seperate_chain
 		{
 		public:
+			
 			inline bool check_for(const type& key) const
 			{
 				std::string keyhash(hash_alg(reinterpret_cast<std::string>(key)));
 			}
-
 		};
 	}
 
@@ -425,15 +445,102 @@ namespace hash
 			  class hash_alg = hash::algorithm::SHA256,
 			  class col_check = collision_checking::seperate_chain<type, hash_alg>
 			  >
-	class hash_table
+	class hash_table:
+		virtual public std::vector<bucket<type>>
 	{
+	protected:
+		using htable = hash_table<type, hash_alg, col_check>;
+
 	public:
-		hash_table();
-		hash_table(const hash_table<type, hash_alg, col_check>& other);
+		hash_table(): bucket_constant(1) {}
+		hash_table(const htable& other): bucket_constant(other.bucket_constant) 
+		{
+			htable::iterator it = other.begin();
+			for(; it != other.end(); it++)
+			{
+			}
+		}
+
+		using iterator = typename std::vector<bucket<type>>::iterator;
+		using const_iterator = typename std::vector<bucket<type>>::const_iterator;
+
+		iterator find(const type& key)
+		{
+			std::string keyhash = hash::algorithm::hash<type, hash_alg>(key);
+			unsigned pos = keyhash % table.size();
+			return htable::iterator(pos);
+		}
+		iterator find(type&& key)
+		{
+			std::string keyhash = hash::algorithm::hash<type, hash_alg>(key);
+			unsigned pos = keyhash % table.size();
+			return htable::iterator(pos);
+		}
+
+		inline bool operator==(const htable& other) const { this->table == other.table; }
+		inline bool operator!=(const htable& other) const { this->table != other.table; }
+
+		htable& operator=(const htable&);
+		htable& operator=(htable&&);
+
+		inline bucket<type>& operator[](iterator it) const { return *it; }
+		inline bucket<type>& operator[](int pos) const { return this->operator[](htable::iterator(pos)); }
+
+		inline bucket<type>& at(iterator it) const { return *it; }
+		inline bucket<type>& at(int pos) const { return this->at(htable::iterator(pos)); }
+
+		htable& operator+=(const htable& other)
+		{
+			std::vector<bucket<type>> tmp = other.data();
+		}
+
+		// reallocate table
+		htable& resize()
+		{
+			
+		}
+
+		// set new bucket size and resize table
+		htable& resize(const size_t& new_bk_size);
+		{
+		}
+
+		htable& resize(size_t&& new_bk_size)
+		{
+
+		}
+
+		void add(const type& data)
+		{
+			std::string keyhash = hash::algorithm::hash<type, hash_alg>(data);
+			int keyslot = keyhash % this->size();
+			bool resize_necesary;
+			if(this->at(keyslot).size()+1) resize_necesary = true;
+			(this->at(keyslot)).push_back(data);
+
+			if(resize_necesary) resize();
+		}
+
+		void add(const std::vector<type>& data)
+		{
+			typename std::vector<type>::iterator it = data.begin();
+			std::string keyhash;
+			bool resize_necesary;
+			int keyslot;
+			for(; it != data.end(); it++)
+			{
+				keyhash = hash::algorithm::hash<type, hash_alg>(*it);
+				keyslot = keyhash % this->size();
+				if(it->size()+1 > bucket_constant) resize_necesary = true;
+				it->push_back(data);
+			}
+
+			if(resize_necesary) resize();
+		}
 
 	private:
 		std::vector<bucket<type>> table;
-
+		int bucket_constant = 0;
 	};
 }
 
