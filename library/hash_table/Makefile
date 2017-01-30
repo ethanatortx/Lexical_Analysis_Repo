@@ -1,9 +1,9 @@
 CC = g++
 CFLAGS = -std=c++14 -I..
-SRCS = hash_table.cpp
+SRCS = test.cpp
 
-hash_table.o: $(SRCS)
-	$(CC) $(CFLAGS) $(SRCS) -o hash_table.o
+driver.o: $(SRCS)
+	$(CC) $(CFLAGS) $(SRCS) -o driver.o
 
 clean:
-	Del "C:\Users\Ethan Rivers\Documents\Lexical_Analysis_Repo\library\hash_table\hash_table.o"
+	Del "C:\Users\Ethan Rivers\Documents\Lexical_Analysis_Repo\library\hash_table\driver.o"
