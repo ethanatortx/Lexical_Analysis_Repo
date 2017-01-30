@@ -34,6 +34,13 @@ public:
 	linked_list(const linked_list& L): tail(new Node(T())) 
 	{
 		tail->next = tail;
+		iterator it = L.begin();
+		for(; it != L.begin(); it++)
+		{
+			this->push_back(*it);
+		}
+
+		this->reverse();
 	}
 
 	// clear contents of this list; erase all elements
