@@ -58,6 +58,19 @@ public:
 	iterator operator[](int);
 	iterator at(int);
 
+	// return size of list
+	inline int size() const
+	{
+		const const_iterator it = this->begin();
+
+		unsigned count = 0;
+		for(; it != this->end(); it++)
+		{
+			count++;
+		}
+		return count;
+	}
+
 	// return if list is empty
 	inline bool empty() const { return this->tail == this->tail->next; }
 

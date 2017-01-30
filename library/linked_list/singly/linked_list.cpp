@@ -56,8 +56,12 @@ int main() {
 
 	list.swap(list_2);
 
+	std::cout<< "Size of list 1: " << list.size();
+
 	std::cout<< "\nList 1: " << std::endl;
 	list.print();
+
+	std::cout<< "Size of list 2: " << list_2.size();
 
 	std::cout<< "\nList 2: " << std::endl;
 	list_2.print();
