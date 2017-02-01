@@ -17,8 +17,11 @@ int main(int argc, char *argv[])
  
 	cout << "sha512('"<< input512 << "'):" << output512 << endl;
 
-	hash::hash_table<int, hash::algorithm::SHA256>* tbl = new hash::hash_table<int, hash::algorithm::SHA256>();
+	hash::hash_table<std::string, int, hash::algorithm::SHA256> tbl;
+	hash::hash_table<std::string, int, hash::algorithm::SHA256> tbl_2;
 	
+	tbl.add("ten", 10);
+
 
 	return 0;
 }

@@ -1,6 +1,8 @@
 #ifndef HASH_H
 #define HASH_H
 
+#include <iomanip>
+#include <sstream>
 #include <vector>
 #include <string>
 #include <cstring>
@@ -9,7 +11,8 @@
 #include <algorithm>
 #include <utility>
 #include <iterator>
-#include <linked_list\linked_list.h>
+#include "linked_list\linked_list.h"
+#include "math_utility\math_utility.h"
 
 namespace hash
 {
@@ -393,7 +396,7 @@ namespace hash
 		template <class type, class hash_alg = hash::algorithm::SHA256>
 		std::string hash(const type& key)
 		{
-			std::string input = std::string(reinterpret_cast<std::string>(key));
+			std::string input = std::string(reinterpret_cast<const char*>(key));
 
 			unsigned char digest[hash_alg::DIGEST_SIZE];
 			memset(digest,0,hash_alg::DIGEST_SIZE);
@@ -419,128 +422,115 @@ namespace hash
 		*/
 	}
 
-	template <class type>
-	using hash_pair = std::pair<type, std::string>;
+	template <class key,
+			  class mapped_data = key>
+	using hash_pair = std::pair<key, mapped_data>;
 
-	template<class type>
-	using bucket = linked_list<hash_pair<type>>;
+	template <class key,
+			  class mapped_data = key>
+	using bucket = linked_list<hash_pair<key, mapped_data>>;
 
-	namespace collision_checking
-	{
-
-		template<class type,
-				 class hash_alg = hash::algorithm::SHA256>
-		struct seperate_chain
-		{
-		public:
-			
-			inline bool check_for(const type& key) const
-			{
-				std::string keyhash(hash_alg(reinterpret_cast<std::string>(key)));
-			}
-		};
-	}
-
-	template <class type,
-			  class hash_alg = hash::algorithm::SHA256,
-			  class col_check = collision_checking::seperate_chain<type, hash_alg>
+	template <class key,
+			  class mapped_data = key,
+			  class hash_alg = hash::algorithm::SHA256
 			  >
 	class hash_table:
-		virtual public std::vector<bucket<type>>
+		virtual public std::vector<bucket<key, mapped_data>>
 	{
+	private:
+		std::vector<bucket<key> > table;
+		int bucket_constant = 0;
+
 	protected:
-		using htable = hash_table<type, hash_alg, col_check>;
+		using htable = hash_table<key, mapped_data, hash_alg>;
 
 	public:
-		hash_table(): bucket_constant(1) {}
-		hash_table(const htable& other): bucket_constant(other.bucket_constant) 
+
+		using iterator = typename std::vector<bucket<key, mapped_data>>::iterator;
+		using const_iterator = typename std::vector<bucket<key, mapped_data>>::const_iterator;
+		using std::vector<bucket<key, mapped_data>>::begin;
+		using std::vector<bucket<key, mapped_data>>::end;
+		using std::vector<bucket<key, mapped_data>>::clear;
+		using std::vector<bucket<key, mapped_data>>::empty;
+		using std::vector<bucket<key, mapped_data>>::size;
+
+		hash_table(){}
+		hash_table(const htable& other): bucket_constant(other.bucket_constant)
 		{
-			htable::iterator it = other.begin();
-			for(; it != other.end(); it++)
+			this->table = other.table;
+		}
+
+		htable& operator=(const htable& other);
+
+		// resize array to be more efficient (reallocate buckets and perfectly fill all buckets)
+		void resize();
+
+		// set bucket constant
+		inline void set_bucket_constant(const std::size_t& bucket_constant) { this->bucket_constant = bucket_constant; resize(); }
+		inline void set_bucket_constant(std::size_t&& bucket_constant) { this->bucket_constant = bucket_constant; resize(); }
+		
+		// set bucket constant and resize to new bucket size
+		inline void resize(const std::size_t bucket_constant) { set_bucket_constant(bucket_constant); resize(); }
+		inline void resize(std::size_t&& bucket_constant) { set_bucket_constant(bucket_constant); resize(); }
+
+		// return count of all elements
+		unsigned long get_element_count() const
+		{
+			unsigned long count = 0;
+			for(htable::iterator it = begin(); it != end(); it++)
 			{
+				count += (*it).size();
 			}
+			return count;
 		}
 
-		using iterator = typename std::vector<bucket<type>>::iterator;
-		using const_iterator = typename std::vector<bucket<type>>::const_iterator;
-
-		iterator find(const type& key)
+		// add element from key:value pair
+		/*
+		void add(const key& k, const mapped_data& m_d)
 		{
-			std::string keyhash = hash::algorithm::hash<type, hash_alg>(key);
-			unsigned pos = keyhash % table.size();
-			return htable::iterator(pos);
-		}
-		iterator find(type&& key)
-		{
-			std::string keyhash = hash::algorithm::hash<type, hash_alg>(key);
-			unsigned pos = keyhash % table.size();
-			return htable::iterator(pos);
-		}
+			std::stringstream pos_stream;
+			pos_stream << "0x" << std::hex << size();
+			std::string pos(pos_stream.str());
 
-		inline bool operator==(const htable& other) const { this->table == other.table; }
-		inline bool operator!=(const htable& other) const { this->table != other.table; }
+			std::string keyhash = hash::algorithm::hash<key, hash::algorithm::SHA256>(k);
+			std::cout<< keyhash << std::endl;
+			std::string index = keyhash % pos;
+			std::cout<< pos << std::endl;
+			std::cout<< index << std::endl;
 
-		htable& operator=(const htable&);
-		htable& operator=(htable&&);
+			hash_pair<key, mapped_data> hpair(k, m_d);
 
-		inline bucket<type>& operator[](iterator it) const { return *it; }
-		inline bucket<type>& operator[](int pos) const { return this->operator[](htable::iterator(pos)); }
+			this->operator[](index).push_back(hpair);
 
-		inline bucket<type>& at(iterator it) const { return *it; }
-		inline bucket<type>& at(int pos) const { return this->at(htable::iterator(pos)); }
-
-		htable& operator+=(const htable& other)
-		{
-			std::vector<bucket<type>> tmp = other.data();
+			if(this->operator[](index).size() > bucket_constant) resize(math_utility::prime::get_next_prime(size()));
 		}
 
-		// reallocate table
-		htable& resize()
+		// add range of elements from vector of key:value pairs
+		void add(const std::vector<hash_pair<key, mapped_data> >& data)
 		{
-			
-		}
-
-		// set new bucket size and resize table
-		htable& resize(const size_t& new_bk_size);
-		{
-		}
-
-		htable& resize(size_t&& new_bk_size)
-		{
-
-		}
-
-		void add(const type& data)
-		{
-			std::string keyhash = hash::algorithm::hash<type, hash_alg>(data);
-			int keyslot = keyhash % this->size();
-			bool resize_necesary;
-			if(this->at(keyslot).size()+1) resize_necesary = true;
-			(this->at(keyslot)).push_back(data);
-
-			if(resize_necesary) resize();
-		}
-
-		void add(const std::vector<type>& data)
-		{
-			typename std::vector<type>::iterator it = data.begin();
-			std::string keyhash;
-			bool resize_necesary;
-			int keyslot;
-			for(; it != data.end(); it++)
+			for (htable::iterator it = data.begin(); it != data.end(); it++)
 			{
-				keyhash = hash::algorithm::hash<type, hash_alg>(*it);
-				keyslot = keyhash % this->size();
-				if(it->size()+1 > bucket_constant) resize_necesary = true;
-				it->push_back(data);
+				this->add(it->first, it->second);
 			}
+		}*/
 
-			if(resize_necesary) resize();
+		// erase node with this key:value pair
+		void erase(const hash_pair<key, mapped_data>& hpair)
+		{
+
+		}
+		// erase first element with this key
+		void erase_with_key(const key& k)
+		{
+
+		}
+		// erase first element with this data
+		void erase_with_value(const mapped_data& m_d)
+		{
+
 		}
 
-	private:
-		std::vector<bucket<type>> table;
-		int bucket_constant = 0;
+	
 	};
 }
 
