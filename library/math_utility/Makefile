@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -std=c++11 -I..
+CFLAGS = -std=c++14 -I..
 SRCS = test.cpp
 
 driver.o: $(SRCS)
