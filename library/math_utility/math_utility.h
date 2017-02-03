@@ -1,17 +1,10 @@
 #ifndef MATH_UTILITY_H
 #define MATH_UTILITY_H
 
-#include <string>
 #include <cstring>
-#include <cstdlib>
-#include <stdlib.h>
 #include <vector>
-#include <ios>
-#include <sstream>
-#include <typeinfo>
-#include "hash\hash.h"
 
-namespace math_utility
+namespace math
 {
 	bool is_prime(unsigned long long num)
 	{
