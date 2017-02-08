@@ -40,7 +40,7 @@ public:
 
 	inline const_iterator& operator++()
 	{
-		if(position++ > size())
+		if(position++ > size()) throw overflow();
 		_ref = objects[position++];
 		return tmp;
 	}
@@ -61,8 +61,6 @@ public:
 	{
 		return this->_ref;
 	}
-
-
 };
 
 template<class T,
