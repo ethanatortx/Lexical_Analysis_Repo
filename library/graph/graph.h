@@ -1,4 +1,4 @@
-#ifndef __GRAPH_H_INCLUDED__
-#define __GRAPH_H_INCLUDED__
+#ifndef GRAPH_H
+#define GRAPH_H
 
 #endif
