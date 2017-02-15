@@ -46,6 +46,8 @@ public:
 	friend bool operator!=(const list<E>&, const list<E>&);
 	template<class E>
 	friend std::ostream& operator<<(std::ostream& os, const list<E>& s_l);
+	template<class E>
+	friend std::istream& operator>>(std::istream& is, const list<E>& s_l);
 
 	// swap the payload data of two nodes in the list
 	void swap(iterator& lhs, iterator& rhs);
