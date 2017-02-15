@@ -94,7 +94,7 @@ def analyze(article):
      print("Analyzed: " + title)
      return siteList
 
-q = 'http://bigstory.ap.org/article/a18692b464c9467aa00a091f7d76becc/10-things-know-today'
+q = 'http://bigstory.ap.org/article/3b2706cb4d3f41e39137b175ff6d0b84/10-things-know-today'
 listOfArticles = analyze(q)
 for article in listOfArticles:
      analyze(article)
