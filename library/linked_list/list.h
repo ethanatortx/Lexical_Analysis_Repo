@@ -336,6 +336,15 @@ inline std::ostream& operator<<(std::ostream& os, const list<T>& s_l)
 	return os;
 }
 
+template<class T>
+inline std::istream& operator>>(std::istream& is, const list<T>& s_l)
+{
+	T n_data = T();
+	is >> n_data;
+	s_l.push_back(n_data);
+	return is;
+}
+
 // Constructor
 template<class T>
 list<T>::list():
