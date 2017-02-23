@@ -19,17 +19,6 @@ class queue
 		Node* next;
 	};
 
-	class iterator;
-	class const_iterator;
-
-	iterator begin();
-	const_iterator begin() const;
-	const_iterator cbegin() const;
-
-	iterator end();
-	const_iterator end() const;
-	const_iterator cend() const;
-
 public:
 	queue();
 	queue(const queue<T>&);
@@ -58,145 +47,6 @@ private:
 };
 
 template<class T>
-class queue<T>::const_iterator
-{
-	friend class queue;
-	friend class queue<T>::iterator;
-
-	typedef T value_type;
-	typedef typename queue<T>::Node const* pointer;
-	typedef T const& reference;
-	typedef std::forward_iterator_tag iterator_category;
-
-public:
-	const_iterator(typename queue<T>::Node const* _ref):
-		ref(_ref) {}
-	const_iterator(const typename queue<T>::iterator& other):
-		ref(other.ref) {}
-	const_iterator(const typename queue<T>::const_iterator& other):
-		ref(other.ref) {}
-
-	inline bool operator==(const typename queue<T>::const_iterator& rhs)
-		{ return this->ref == rhs.ref; }
-	inline bool operator!=(const typename queue<T>::const_iterator& rhs)
-		{ return this->ref == rhs.ref; }
-	inline typename queue<T>::const_iterator& swap(typename queue<T>::const_iterator& rhs)
-	{
-		typename queue<T>::Node* tmp(ref);
-		this->ref = rhs.ref;
-		rhs.ref = tmp;
-		return *this;
-	}
-
-	inline typename queue<T>::const_iterator& operator=(const typename queue<T>::iterator& rhs)
-	{
-		this->ref = rhs.ref;
-		return *this;
-	}
-	inline typename queue<T>::const_iterator& operator=(const typename queue<T>::const_iterator& rhs)
-	{
-		this->ref = rhs.ref;
-		return *this;
-	}
-
-	inline typename queue<T>::const_iterator& operator++()
-	{
-		ref = ref->next;
-		return *this;
-	}
-	inline typename queue<T>::const_iterator operator++(int)
-	{
-		typename queue<T>::const_iterator tmp(*this);
-		ref = ref->next;
-		return tmp;
-	}
-
-	inline typename queue<T>::const_iterator::pointer operator->() const
-		{ return ref->next; }
-	inline typename queue<T>::const_iterator::reference operator*() const
-		{ return ref->next->data; }
-
-private:
-	typename queue<T>::Node const* ref;
-};
-
-template<class T>
-class queue<T>::iterator
-{
-	friend class queue;
-	friend class queue<T>::const_iterator;
-
-	typedef T value_type;
-	typedef typename queue<T>::Node* pointer;
-	typedef T& reference;
-	typedef std::forward_iterator_tag iterator_category;
-
-public:
-	iterator(typename queue<T>::Node* _ref):
-		ref(_ref) {}
-	iterator(const typename queue<T>::iterator& other):
-		ref(other.ref) {}
-
-	inline bool operator==(const typename queue<T>::iterator& rhs)
-		{ return this->ref == rhs.ref; }
-	inline bool operator!=(const typename queue<T>::iterator& rhs)
-		{ return this->ref != rhs.ref; }
-	inline typename queue<T>::iterator& swap(typename queue<T>::iterator& rhs)
-	{
-		typename queue<T>::Node* tmp(this->ref);
-		this->ref = rhs.ref;
-		rhs.ref = tmp;
-		return *this;
-	}
-
-	inline typename queue<T>::iterator& operator=(const typename queue<T>::iterator& rhs)
-	{
-		this->ref = rhs.ref;
-		return *this;
-	}
-
-	inline typename queue<T>::iterator& operator++()
-	{
-		ref = ref->next;
-		return *this;
-	}
-	inline typename queue<T>::iterator operator++(int)
-	{
-		typename queue<T>::Node* tmp(ref);
-		ref = ref->next;
-		return tmp;
-	}
-
-	inline typename queue<T>::iterator::pointer operator->() const
-		{ return ref->next; }
-	inline typename queue<T>::iterator::reference operator*() const
-		{ return ref->next->data; }
-
-private:
-	typename queue<T>::Node* ref;
-};
-
-template<class T>
-inline typename queue<T>::iterator queue<T>::begin()
-	{ return typename queue<T>::iterator(head); }
-template<class T>
-inline typename queue<T>::const_iterator queue<T>::begin() const
-	{ return typename queue<T>::const_iterator(head); }
-template<class T>
-inline typename queue<T>::const_iterator queue<T>::cbegin() const
-	{ return typename queue<T>::const_iterator(head); }
-
-template<class T>
-inline typename queue<T>::iterator queue<T>::end()
-	{ return typename queue<T>::iterator(tail); }
-template<class T>
-inline typename queue<T>::const_iterator queue<T>::end() const
-	{ return typename queue<T>::const_iterator(tail); }
-template<class T>
-inline typename queue<T>::const_iterator queue<T>::cend() const
-	{ return typename queue<T>::const_iterator(tail); }
-
-template<class T>
 queue<T>::queue():
 	head(new Node(T())) {}
 
@@ -211,13 +61,13 @@ template<class T>
 queue<T>& queue<T>::operator=(const queue<T>& rhs)
 {
 	clear();
- 
-	for(typename queue<T>::const_iterator it = rhs.begin();
-		it != rhs.end();
-		++it)
+
+	queue<T>::Node* n = rhs.head;
+
+	while(n->next != nullptr)
 	{
-		std::cout << "test";
-		this->push(*it);
+		push(n->next->data);
+		n = n->next;
 	}
 
 	return (*this);
@@ -229,11 +79,12 @@ std::string queue<T>::to_string(const char delim)
 	if(empty()) return "";
 	std::stringstream ss;
 
-	for(queue<T>::const_iterator it = begin();
-		it != end();
-		++it)
+	queue<T>::Node* test = head;
+
+	while(test->next != nullptr)
 	{
-		ss << (*it) << delim;
+		ss << (test->next->data) << delim;
+		test = test->next;
 	}
 
 	return (ss.str());
@@ -249,7 +100,8 @@ std::string queue<T>::to_string(const char delim) const
 
 	while(test->next != nullptr)
 	{
-		std::cout << test->next->data;
+		ss << (test->next->data) << delim;
+		test = test->next;
 	}
 
 	return (ss.str());
@@ -258,7 +110,6 @@ std::string queue<T>::to_string(const char delim) const
 template<class T>
 inline std::ostream& operator<<(std::ostream& os, const queue<T>& rhs)
 {
-	std::cout << "test";
 	os << (rhs.to_string());
 	return os;
 }
