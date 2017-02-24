@@ -1,12 +1,12 @@
-#ifndef QUEUE_H
-#define QUEUE_H
+#ifndef STACK_H
+#define STACK_H
 
 #include <iostream>
 #include <string>
 #include <sstream>
 
 template<class T>
-class queue 
+class stack 
 {
 	typedef T value_type;
 	typedef T& reference;
@@ -20,10 +20,10 @@ class queue
 	};
 
 public:
-	queue();
-	queue(const queue<T>&);
+	stack();
+	stack(const stack<T>&);
 
-	queue<T>& operator=(const queue<T>&);
+	stack<T>& operator=(const stack<T>&);
 
 	value_type pull();
 
@@ -38,22 +38,22 @@ public:
 	std::string to_string(const char = ' ') const;
 
 	template<class E>
-	friend std::ostream& operator<<(std::ostream&, const queue<E>&);
+	friend std::ostream& operator<<(std::ostream&, const stack<E>&);
 	template<class E>
-	friend std::istream& operator>>(std::istream&, queue<E>&);
+	friend std::istream& operator>>(std::istream&, stack<E>&);
 	template<class E>
-	friend void swap(queue<T>&, queue<T>&);
+	friend void swap(stack<T>&, stack<T>&);
 
 private:
 	Node* head;
 };
 
 template<class T>
-queue<T>::queue():
+stack<T>::stack():
 	head(new Node(T())) {}
 
 template<class T>
-queue<T>::queue(const queue<T>& other):
+stack<T>::stack(const stack<T>& other):
 	head(new Node(T()))
 {
 	this->operator=(other);
@@ -62,12 +62,12 @@ queue<T>::queue(const queue<T>& other):
 //TODO : fix this so that it isn't reversed on copy
 
 template<class T>
-queue<T>& queue<T>::operator=(const queue<T>& rhs)
+stack<T>& stack<T>::operator=(const stack<T>& rhs)
 {
 	clear();
 
-	queue<T>::Node* n = rhs.head;
-	queue<T> inverse;
+	stack<T>::Node* n = rhs.head;
+	stack<T> inverse;
 
 	while(n->next != nullptr)
 	{
@@ -86,12 +86,12 @@ queue<T>& queue<T>::operator=(const queue<T>& rhs)
 }
 
 template<class T>
-std::string queue<T>::to_string(const char delim)
+std::string stack<T>::to_string(const char delim)
 {
 	if(empty()) return "";
 	std::stringstream ss;
 
-	queue<T>::Node* test = head;
+	stack<T>::Node* test = head;
 
 	while(test->next != nullptr)
 	{
@@ -103,12 +103,12 @@ std::string queue<T>::to_string(const char delim)
 }
 
 template<class T>
-std::string queue<T>::to_string(const char delim) const
+std::string stack<T>::to_string(const char delim) const
 {
 	if(empty()) return "";
 	std::stringstream ss;
 
-	queue<T>::Node* test = head;
+	stack<T>::Node* test = head;
 
 	while(test->next != nullptr)
 	{
@@ -120,14 +120,14 @@ std::string queue<T>::to_string(const char delim) const
 }
 
 template<class T>
-inline std::ostream& operator<<(std::ostream& os, const queue<T>& rhs)
+inline std::ostream& operator<<(std::ostream& os, const stack<T>& rhs)
 {
 	os << (rhs.to_string());
 	return os;
 }
 
 template<class T>
-inline std::istream& operator>>(std::istream& is, queue<T>& rhs)
+inline std::istream& operator>>(std::istream& is, stack<T>& rhs)
 {
 	T x;
 	is >> x;
@@ -136,19 +136,19 @@ inline std::istream& operator>>(std::istream& is, queue<T>& rhs)
 }
 
 template<class T>
-inline void swap(queue<T>& lhs, queue<T>& rhs)
+inline void swap(stack<T>& lhs, stack<T>& rhs)
 {
-	queue<T> old(lhs);
+	stack<T> old(lhs);
 	lhs.operator=(rhs);
 	rhs.operator=(old);
 }
 
 template<class T>
-typename queue<T>::value_type queue<T>::pull()
+typename stack<T>::value_type stack<T>::pull()
 {
 	if(empty()) return 0;
 
-	queue<T>::Node* n = head->next;
+	stack<T>::Node* n = head->next;
 	head->next = head->next->next;
 
 	T x = n->data;
@@ -157,9 +157,9 @@ typename queue<T>::value_type queue<T>::pull()
 }
 
 template<class T>
-void queue<T>::push(const T& data)
+void stack<T>::push(const T& data)
 {
-	queue<T>::Node* n = new queue<T>::Node(data);
+	stack<T>::Node* n = new stack<T>::Node(data);
 	if(!empty())
 	{
 		n->next = head->next;
@@ -172,9 +172,9 @@ void queue<T>::push(const T& data)
 }
 
 template<class T>
-void queue<T>::push(T&& data)
+void stack<T>::push(T&& data)
 {
-	queue<T>::Node* n = new queue<T>::Node(data);
+	stack<T>::Node* n = new stack<T>::Node(data);
 	if(!empty())
 	{
 		n->next = head->next;
@@ -187,13 +187,13 @@ void queue<T>::push(T&& data)
 }
 
 template<class T>
-inline void queue<T>::clear()
+inline void stack<T>::clear()
 {
 	while(!empty()) pull();
 }
 
 template<class T>
-inline bool queue<T>::empty() const
+inline bool stack<T>::empty() const
 {
 	return (head->next == nullptr);
 }

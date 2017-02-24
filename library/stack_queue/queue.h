@@ -1,12 +1,12 @@
-#ifndef STACK_H
-#define STACK_H
+#ifndef QUEUE_H
+#define QUEUE_H
 
 #include <iostream>
 #include <string>
 #include <sstream>
 
 template<class T>
-class stack
+class queue
 {
 	struct Node
 	{
@@ -20,10 +20,10 @@ class stack
 	typedef T& reference;
 
 public:
-	stack();
-	stack(const stack<T>&);
+	queue();
+	queue(const queue<T>&);
 
-	stack<T>& operator=(const stack<T>&);
+	queue<T>& operator=(const queue<T>&);
 
 	T pull();
 
@@ -37,11 +37,11 @@ public:
 	std::string to_string(const char = ' ');
 	std::string to_string(const char = ' ') const;
 	template<class E>
-	friend std::ostream& operator<<(std::ostream&, const stack<E>&);
+	friend std::ostream& operator<<(std::ostream&, const queue<E>&);
 	template<class E>
-	friend std::istream& operator>>(std::istream&, stack<E>&);
+	friend std::istream& operator>>(std::istream&, queue<E>&);
 
-	~stack();
+	~queue();
 
 private:
 	Node* head;
@@ -49,14 +49,14 @@ private:
 };
 
 template<class T>
-stack<T>::stack():
+queue<T>::queue():
 	head(new Node(T())), tail(nullptr)
 {
 	head->next = tail;
 }
 
 template<class T>
-stack<T>::stack(const stack<T>& other):
+queue<T>::queue(const queue<T>& other):
 	head(new Node(T())), tail(nullptr)
 {
 	head->next = tail;
@@ -64,11 +64,11 @@ stack<T>::stack(const stack<T>& other):
 }
 
 template<class T>
-stack<T>& stack<T>::operator=(const stack<T>& rhs)
+queue<T>& queue<T>::operator=(const queue<T>& rhs)
 {
 	clear();
 
-	stack<T>::Node* n = rhs.head;
+	queue<T>::Node* n = rhs.head;
 
 	while(n->next != nullptr)
 	{
@@ -80,20 +80,20 @@ stack<T>& stack<T>::operator=(const stack<T>& rhs)
 }
 
 template<class T>
-T stack<T>::pull()
+T queue<T>::pull()
 {
 	if(empty()) return 0;
 	T x = head->next->data;
-	stack<T>::Node* n = head->next;
+	queue<T>::Node* n = head->next;
 	head->next = head->next->next;
 	delete n;
 	return x;
 }
 
 template<class T>
-void stack<T>::push(const T& data)
+void queue<T>::push(const T& data)
 {
-	stack<T>::Node* n = new stack<T>::Node(data);
+	queue<T>::Node* n = new queue<T>::Node(data);
 	if(!empty())
 	{
 		tail->next = n;
@@ -108,9 +108,9 @@ void stack<T>::push(const T& data)
 }
 
 template<class T>
-void stack<T>::push(T&& data)
+void queue<T>::push(T&& data)
 {
-	stack<T>::Node* n = new stack<T>::Node(data);
+	queue<T>::Node* n = new queue<T>::Node(data);
 	if(!empty())
 	{
 		tail->next = n;
@@ -125,24 +125,24 @@ void stack<T>::push(T&& data)
 }
 
 template<class T>
-inline void stack<T>::clear()
+inline void queue<T>::clear()
 {
 	while(!empty()) pull();
 }
 
 template<class T>
-inline bool stack<T>::empty() const
+inline bool queue<T>::empty() const
 {
 	return (head->next == nullptr);
 }
 
 template<class T>
-inline std::string stack<T>::to_string(const char delim)
+inline std::string queue<T>::to_string(const char delim)
 {
 	if(empty()) return "";
 	std::stringstream ss;
 
-	stack<T>::Node* n = head;
+	queue<T>::Node* n = head;
 
 	while(n->next != nullptr)
 	{
@@ -154,12 +154,12 @@ inline std::string stack<T>::to_string(const char delim)
 }
 
 template<class T>
-inline std::string stack<T>::to_string(const char delim) const
+inline std::string queue<T>::to_string(const char delim) const
 {
 	if(empty()) return "";
 	std::stringstream ss;
 
-	stack<T>::Node* n = head;
+	queue<T>::Node* n = head;
 
 	while(n->next != nullptr)
 	{
@@ -171,33 +171,33 @@ inline std::string stack<T>::to_string(const char delim) const
 }
 
 template<class T>
-inline std::ostream& operator<<(std::ostream& os, const stack<T>& _stack)
+inline std::ostream& operator<<(std::ostream& os, const queue<T>& _queue)
 {
-	os << (_stack.to_string());
+	os << (_queue.to_string());
 	return os;
 }
 
 template<class T>
-inline std::istream& operator>>(std::istream& is, stack<T>& _stack)
+inline std::istream& operator>>(std::istream& is, queue<T>& _queue)
 {
 	T _data;
 	is >> _data;
 
-	_stack.push(_data);
+	_queue.push(_data);
 
 	return is;
 }
 
 template<class T>
-inline void swap(stack<T>& lhs, stack<T>& rhs)
+inline void swap(queue<T>& lhs, queue<T>& rhs)
 {
-	stack<T> old(lhs);
+	queue<T> old(lhs);
 	lhs.operator=(rhs);
 	rhs.operator=(old);
 }
 
 template<class T>
-stack<T>::~stack()
+queue<T>::~queue()
 {
 	clear();
 	delete head;
