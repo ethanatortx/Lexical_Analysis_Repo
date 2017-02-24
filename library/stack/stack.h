@@ -16,19 +16,14 @@ class stack
 		Node* next;
 	};
 
-	class const_iterator;
-	class iterator;
-
-	iterator begin();
-	const_iterator begin() const;
-	const_iterator cbegin() const;
-
-	iterator end();
-	const_iterator end() const;
-	const_iterator cend() const;
+	typedef T value_type;
+	typedef T& reference;
 
 public:
 	stack();
+	stack(const stack<T>&);
+
+	stack<T>& operator=(const stack<T>&);
 
 	T pull();
 
@@ -54,126 +49,34 @@ private:
 };
 
 template<class T>
-class stack<T>::const_iterator
-{
-	friend class stack;
-	friend class stack<T>::iterator;
-
-	typedef T value_type;
-	typedef T& reference;
-
-public:
-	const_iterator(typename stack<T>::Node const* _ref):
-		ref(_ref) {}
-	const_iterator(const typename stack<T>::iterator& other):
-		ref(other.ref) {}
-	const_iterator(const typename stack<T>::const_iterator& other):
-		ref(other.ref) {}
-
-	inline typename stack<T>::const_iterator& operator=(const typename stack<T>::iterator& other)
-	{
-		ref = other.ref;
-		return *this;
-	}
-	inline typename stack<T>::const_iterator& operator=(const typename stack<T>::const_iterator& other)
-	{
-		ref = other.ref;
-		return *this;
-	}
-
-	inline bool operator==(const typename stack<T>::const_iterator& rhs)
-		{ return (this->ref == rhs.ref); }
-	inline bool operator!=(const typename stack<T>::const_iterator& rhs)
-		{ return (this->ref != rhs.ref); }
-
-	inline void swap(typename stack<T>::const_iterator& rhs)
-	{
-		const typename stack<T>::Node* old_lhs_ref = this->ref;
-		this->ref = rhs.ref;
-		rhs.ref = old_lhs_ref;
-	}
-
-	inline typename stack<T>::const_iterator& operator++()
-	{
-		ref = ref->next;
-		return *this;
-	}
-	inline typename stack<T>::const_iterator operator++(int)
-	{
-		typename stack<T>::const_iterator tmp(*this);
-		ref = ref->next;
-		return tmp;
-	}
-
-	inline typename stack<T>::Node* operator->() const
-		{ return ref->next; }
-	inline typename stack<T>::const_iterator::reference operator*() const
-		{ return ref->next->data; }
-
-private:
-	typename stack<T>::Node const* ref;
-};
-
-template<class T>
-class stack<T>::iterator:
-	public stack<T>::const_iterator
-{
-	friend class stack;
-	friend class stack<T>::const_iterator;
-
-	typedef T value_type;
-	typedef T& reference;
-
-public:
-	iterator(typename stack<T>::Node* _ref):
-		ref(_ref) {}
-	iterator(const typename stack<T>::iterator& other):
-		ref(other.ref) {}
-
-	inline typename stack<T>::iterator& operator=(const typename stack<T>::iterator& other)
-	{
-		ref = other.ref;
-		return *this;
-	}
-
-	inline bool operator==(const typename stack<T>::iterator& rhs)
-		{ return (this->ref == rhs.ref); }
-	inline bool operator!=(const typename stack<T>::iterator& rhs)
-		{ return (this->ref != rhs.ref); }
-
-	inline void swap(typename stack<T>::iterator& rhs)
-	{
-		typename stack<T>::Node* old_lhs_ref = this->ref;
-		this->ref = rhs.ref;
-		rhs.ref = old_lhs_ref;
-	}
-
-	inline typename stack<T>::iterator& operator++()
-	{
-		ref = ref->next;
-		return (*this);
-	}
-	inline typename stack<T>::iterator operator++(int)
-	{
-		typename stack<T>::iterator tmp(*this);
-		ref = ref->next;
-		return tmp;
-	}
-
-	inline typename stack<T>::Node* operator->() const
-		{ return ref->next; }
-	inline typename stack<T>::iterator::reference operator*() const
-		{ return ref->next->data; }
-
-private:
-	typename stack<T>::Node* ref;
-};
-
-template<class T>
 stack<T>::stack():
 	head(new Node(T())), tail(nullptr)
 {
 	head->next = tail;
+}
+
+template<class T>
+stack<T>::stack(const stack<T>& other):
+	head(new Node(T())), tail(nullptr)
+{
+	head->next = tail;
+	this->operator=(other);
+}
+
+template<class T>
+stack<T>& stack<T>::operator=(const stack<T>& rhs)
+{
+	clear();
+
+	stack<T>::Node* n = rhs.head;
+
+	while(n->next != nullptr)
+	{
+		push(n->next->data);
+		n = n->next;
+	}
+
+	return *this;
 }
 
 template<class T>
@@ -234,35 +137,17 @@ inline bool stack<T>::empty() const
 }
 
 template<class T>
-typename stack<T>::iterator stack<T>::begin()
-	{ return stack<T>::iterator(head); }
-template<class T>
-typename stack<T>::const_iterator stack<T>::begin() const
-	{ return stack<T>::const_iterator(head); }
-template<class T>
-typename stack<T>::const_iterator stack<T>::cbegin() const
-	{ return stack<T>::const_iterator(head); }
-
-template<class T>
-typename stack<T>::iterator stack<T>::end()
-	{ return stack<T>::iterator(tail); }
-template<class T>
-typename stack<T>::const_iterator stack<T>::end() const
-	{ return stack<T>::const_iterator(tail); }
-template<class T>
-typename stack<T>::const_iterator stack<T>::cend() const
-	{ return stack<T>::const_iterator(tail); }
-
-template<class T>
 inline std::string stack<T>::to_string(const char delim)
 {
+	if(empty()) return "";
 	std::stringstream ss;
 
-	for(stack<T>::const_iterator it = begin();
-		it != end();
-		++it)
+	stack<T>::Node* n = head;
+
+	while(n->next != nullptr)
 	{
-		ss << (*it) << delim;
+		ss << n->next->data << delim;
+		n = n->next;
 	}
 
 	return (ss.str());
@@ -271,13 +156,15 @@ inline std::string stack<T>::to_string(const char delim)
 template<class T>
 inline std::string stack<T>::to_string(const char delim) const
 {
+	if(empty()) return "";
 	std::stringstream ss;
 
-	for(stack<T>::const_iterator it = begin();
-		it != end();
-		++it)
+	stack<T>::Node* n = head;
+
+	while(n->next != nullptr)
 	{
-		ss << (*it) << delim;
+		ss << n->next->data << delim;
+		n = n->next;
 	}
 
 	return (ss.str());
@@ -299,6 +186,14 @@ inline std::istream& operator>>(std::istream& is, stack<T>& _stack)
 	_stack.push(_data);
 
 	return is;
+}
+
+template<class T>
+inline void swap(stack<T>& lhs, stack<T>& rhs)
+{
+	stack<T> old(lhs);
+	lhs.operator=(rhs);
+	rhs.operator=(old);
 }
 
 template<class T>

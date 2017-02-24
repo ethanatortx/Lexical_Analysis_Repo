@@ -41,6 +41,8 @@ public:
 	friend std::ostream& operator<<(std::ostream&, const queue<E>&);
 	template<class E>
 	friend std::istream& operator>>(std::istream&, queue<E>&);
+	template<class E>
+	friend void swap(queue<T>&, queue<T>&);
 
 private:
 	Node* head;
@@ -57,13 +59,23 @@ queue<T>::queue(const queue<T>& other):
 	this->operator=(other);
 }
 
+//TODO : fix this so that it isn't reversed on copy
+
 template<class T>
 queue<T>& queue<T>::operator=(const queue<T>& rhs)
 {
 	clear();
 
 	queue<T>::Node* n = rhs.head;
+	queue<T> inverse;
 
+	while(n->next != nullptr)
+	{
+		inverse.push(n->next->data);
+		n = n->next;
+	}
+
+	n = inverse.head;
 	while(n->next != nullptr)
 	{
 		push(n->next->data);
@@ -126,8 +138,8 @@ inline std::istream& operator>>(std::istream& is, queue<T>& rhs)
 template<class T>
 inline void swap(queue<T>& lhs, queue<T>& rhs)
 {
-	queue<T> old(*lhs);
-	lhs.operator=(*rhs);
+	queue<T> old(lhs);
+	lhs.operator=(rhs);
 	rhs.operator=(old);
 }
 
