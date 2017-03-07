@@ -6,7 +6,6 @@
 #include <iostream>
 #include <cstdlib>
 #include <vector>
-//#include "error\error.h"
 
 template<class T>
 class btree
@@ -42,12 +41,13 @@ public:
 	btree(const btree<T>&);
 	~btree();
 
-	void insert(const_reference data);
+	void add(const_reference data);
 	void insert(iterator _root, const_reference data);
 	iterator search(const_reference data);
 	bool remove(const_reference data);
 	void clear();
-	std::stringstream& to_string(std::stringstream& ss, iterator pos);
+	std::string to_string(iterator pos) const;
+	std::string to_string(iterator pos, std::stringstream& ss) const;
 	void deltree(iterator pos);
 	size_type size(btree<T>::iterator pos) const;
 
@@ -55,16 +55,16 @@ public:
 private:
 	bool size_is_comparable(btree<T>::iterator _root) const;
 	void rebalance(btree<T>::iterator _root);
-	void strict_rebalance(btree<T>::iterator _root, std::vector<T>& vec);
+	void strict_rebalance(btree<T>::iterator _root, const std::vector<T>& vec);
 	std::vector<T> data_to_vector(btree<T>::iterator _root);
 
 	node* root;
 };
 
 template<class T>
-std::ostream& operator<<(std::ostream& os, const btree<T>& B)
+std::ostream& operator<<(std::ostream& os, const btree<T>& b)
 {
-	os << (B.to_string());
+	os << (b.to_string(b.root));
 	return os;
 }
 
@@ -72,8 +72,8 @@ template<class T>
 void quicksort(std::vector<T>& arr, int left, int right)
 {
 	int i = left, j = right;
-	int tmp;
-	int pivot = arr[(left + right) / 2];
+	T tmp;
+	T pivot = arr[(left + right) / 2];
 
 	/* partition */
 	while (i <= j) {
@@ -98,13 +98,14 @@ void quicksort(std::vector<T>& arr, int left, int right)
 }
 
 template<class T>
-btree<T>::btree()
+btree<T>::btree():
+	root(nullptr)
 {}
 
 template<class T>
 btree<T>::~btree()
 {
-	clear();
+	//clear();
 }
 
 template<class T>
@@ -135,46 +136,41 @@ void btree<T>::rebalance(btree<T>::iterator _root)
 }
 
 template<class T>
-void btree<T>::strict_rebalance(btree<T>::node* _root, std::vector<T>& vec)
+void btree<T>::strict_rebalance(btree<T>::node* _root, const std::vector<T>& vec)
 {
-	if(vec.size() == 0)
+	typename std::vector<T>::size_type _size_of_vec = vec.size();
+	if(_root != nullptr)
 	{
-		return;
-	}
-	else if(vec.size() == 1)
-	{
-		_root->data = vec[0];
-	}
-	else if(vec.size() == 2)
-	{
-		_root->data = vec[0];
-		node *left;
-		if(root->left == nullptr)
+		if(_size_of_vec < 2)
 		{
-			left = new node(vec[1]);
-			_root->left = left;
+			
 		}
-	}
-	else
-	{
-		size_type median = vec.size()/2;
+		else if ((_size_of_vec % 2) == 0)
+		{
 
-		_root->data = vec[median];
-	
-		std::vector<T> left_vec, right_vec;
-		node *left, *right;
+		}
+		else if ((_size_of_vec % 2) == 1)
+		{
+			typename std::vector<T>::size_type _median = ((_size_of_vec) / 2);
+			T new_root_data = vec[_median];
+			std::vector<T> lvec(vec.begin(), vec.begin()+_median-1);
+			std::vector<T> rvec(vec.begin()+_median, vec.end());
 
-		left = new node(T());
-		right = new node(T());
+			_root->data = new_root_data;
 
-		_root->left = left;
-		_root->right = right;
-
-		left_vec.insert(left_vec.begin(), vec.begin(), vec.begin()+median);
-		right_vec.insert(right_vec.begin(), vec.begin()+median+1, vec.end());
-
-		strict_rebalance(_root->left, left_vec);
-		strict_rebalance(_root->right, right_vec);
+			if(lvec.size() > 0)
+			{
+				node* new_left = new node(T());
+				_root->left = new_left;
+				strict_rebalance(new_left, lvec);
+			}
+			if(rvec.size() > 0)
+			{
+				node* new_right = new node(T());
+				_root->right = new_right;
+				strict_rebalance(new_right, rvec);
+			}
+		}
 	}
 }
 
@@ -199,21 +195,17 @@ std::vector<T> btree<T>::data_to_vector(btree<T>::iterator _root)
 	return vec;
 }
 
-template<class T>
-inline void btree<T>::insert(btree<T>::const_reference _data)
-{
-	insert(this->root, _data);
-}
 
 template<class T>
 void btree<T>::insert(btree<T>::iterator _root, btree<T>::const_reference _data)
 {
 	rebalance(_root);
 
-	if(root == nullptr)
+	if(root == nullptr && _root == nullptr)
 	{
 		node* n = new node(_data);
 		root = n;
+		_root = n;
 	}
 	else if(_data > _root->data)
 	{
@@ -239,6 +231,14 @@ void btree<T>::insert(btree<T>::iterator _root, btree<T>::const_reference _data)
 			insert(_root->left, _data);
 		}
 	}
+
+	rebalance(_root);
+}
+
+template<class T>
+inline void btree<T>::add(btree<T>::const_reference _data)
+{
+	insert(this->root, _data);
 }
 
 template<class T>
@@ -260,9 +260,23 @@ void btree<T>::clear()
 }
 
 template<class T>
-std::stringstream& to_string(std::stringstream& ss, typename btree<T>::iterator& pos)
+std::string btree<T>::to_string(typename btree<T>::iterator pos) const
 {
+	std::stringstream ss;
+	return to_string(pos, ss);
+}
 
+template<class T>
+std::string btree<T>::to_string(typename btree<T>::iterator pos, std::stringstream& ss) const
+{
+	if(pos != nullptr)
+	{
+		ss << pos->data;
+		ss << to_string(pos->left, ss);
+		ss << to_string(pos->right, ss);
+	}
+
+	return (ss.str());
 }
 
 template<class T>

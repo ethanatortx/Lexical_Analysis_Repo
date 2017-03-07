@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -std=c++17 -I..
+CFLAGS = -std=gnu++17 -I..
 SRCS = driver.cpp
 
 driver.o: $(SRCS)
