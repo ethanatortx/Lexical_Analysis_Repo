@@ -46,9 +46,11 @@ public:
 	iterator search(const_reference data);
 	bool remove(const_reference data);
 	void clear();
-	std::string to_string(iterator pos) const;
-	std::string to_string(iterator pos, std::stringstream& ss) const;
+	std::string to_string(const char = ' ') const;
+	std::string to_string(iterator pos, const char = ' ') const;
+	std::string to_string(iterator pos, std::stringstream& ss, const char = ' ') const;
 	void deltree(iterator pos);
+	size_type size() const;
 	size_type size(btree<T>::iterator pos) const;
 
 
@@ -141,20 +143,34 @@ void btree<T>::strict_rebalance(btree<T>::node* _root, const std::vector<T>& vec
 	typename std::vector<T>::size_type _size_of_vec = vec.size();
 	if(_root != nullptr)
 	{
-		if(_size_of_vec < 2)
+		if ((_size_of_vec % 2) == 0)
 		{
-			
-		}
-		else if ((_size_of_vec % 2) == 0)
-		{
+			typename std::vector<T>::size_type _median = ((_size_of_vec) / 2)-1;
+			T new_root_data = vec[_median--];
+			std::vector<T> lvec(vec.begin(), vec.begin()+_median);
+			std::vector<T> rvec(vec.begin()+_median+1, vec.end());
 
+			_root->data = new_root_data;
+
+			if(lvec.size() > 0)
+			{
+				node* new_left = new node(T());
+				_root->left = new_left;
+				strict_rebalance(new_left, lvec);
+			}
+			if(rvec.size() > 0)
+			{
+				node* new_right = new node(T());
+				_root->right = new_right;
+				strict_rebalance(new_right, rvec);
+			}
 		}
 		else if ((_size_of_vec % 2) == 1)
 		{
-			typename std::vector<T>::size_type _median = ((_size_of_vec) / 2);
-			T new_root_data = vec[_median];
-			std::vector<T> lvec(vec.begin(), vec.begin()+_median-1);
-			std::vector<T> rvec(vec.begin()+_median, vec.end());
+			typename std::vector<T>::size_type _median = ((_size_of_vec) / 2)-1;
+			T new_root_data = vec[_median--];
+			std::vector<T> lvec(vec.begin(), vec.begin()+_median);
+			std::vector<T> rvec(vec.begin()+_median+1, vec.end());
 
 			_root->data = new_root_data;
 
@@ -260,20 +276,27 @@ void btree<T>::clear()
 }
 
 template<class T>
-std::string btree<T>::to_string(typename btree<T>::iterator pos) const
+std::string btree<T>::to_string(const char delim) const
 {
 	std::stringstream ss;
-	return to_string(pos, ss);
+	return to_string(root, ss, delim);
 }
 
 template<class T>
-std::string btree<T>::to_string(typename btree<T>::iterator pos, std::stringstream& ss) const
+std::string btree<T>::to_string(typename btree<T>::iterator pos, const char delim) const
+{
+	std::stringstream ss;
+	return to_string(pos, ss, delim);
+}
+
+template<class T>
+std::string btree<T>::to_string(typename btree<T>::iterator pos, std::stringstream& ss, const char delim) const
 {
 	if(pos != nullptr)
 	{
-		ss << pos->data;
-		ss << to_string(pos->left, ss);
-		ss << to_string(pos->right, ss);
+		ss << pos->data << delim;
+		to_string(pos->left, ss, delim);
+		to_string(pos->right, ss, delim);
 	}
 
 	return (ss.str());
@@ -289,6 +312,12 @@ void btree<T>::deltree(iterator pos)
 
 		delete pos;
 	}
+}
+
+template<class T>
+typename btree<T>::size_type btree<T>::size() const
+{
+	return size(root);
 }
 
 template<class T>

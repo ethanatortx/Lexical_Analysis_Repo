@@ -4,12 +4,17 @@
 
 int main()
 {
-	btree<std::string> source;
+	btree<int> source;
 
-	source.add(" 10 ");
-	source.add(" 20 ");
+	source.add(10);
+	source.add(20);
 
-	std::cout << source;
+	source.add(30);
+	source.add(40);
+	source.add(50);
+
+	std::cout << source.size();
+	std::cout << source.to_string();
 
 	return 0;
 }
