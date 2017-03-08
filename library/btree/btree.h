@@ -24,10 +24,10 @@ public:
 	struct node
 	{
 		friend class btree;
-		static const unsigned element_constant = btree<T>::node_element_constant;
+		const unsigned element_constant;
 
-		node(std::array<T, element_constant> _data, std::array<node*, element_constant> _children):
-			data(_data), children(_children) {}
+		node(std::array<T, element_constant> _data, std::array<node*, element_constant+1> _children = std::array<node*, element_constant+1>()):
+			data(_data), children(_children), element_constant(node_element_constant) {}
 
 		std::array<T, element_constant> data;
 		std::array<node*, element_constant> children;
@@ -69,7 +69,7 @@ public:
 
 private:
 	void rebalance(iterator root);
-	void strict_rebalance(iterator root, std::vector<T>& vec);
+	void strict_rebalance(iterator root, typename std::vector<T>::iterator first, typename std::vector<T>::iterator last);
 
 	std::vector<T> data_to_vector(iterator root);
 
@@ -78,7 +78,7 @@ private:
 	size_type size(iterator root) const;
 	size_type size(const_iterator root) const;
 
-	static const unsigned node_element_constant = 2;
+	const unsigned node_element_constant;
 	node* root;
 };
 
@@ -129,11 +129,9 @@ void quickSort(std::vector<T>& arr, int left, int right) {
 }
 
 template<class T>
-btree<T>::btree(const unsigned n_e_const):
-	root(nullptr)
-{
-	node_element_constant = n_e_const;
-}
+btree<T>::btree(const unsigned n_e_const = 2):
+	root(nullptr), node_element_constant(n_e_const)
+{}
 
 template<class T>
 btree<T>::btree(const btree<T>& bt):
@@ -176,30 +174,31 @@ void btree<T>::rebalance(typename btree<T>::iterator root)
 		{
 			std::vector<T> _data = data_to_vector(root);
 			quicksort(_data, 0, _data.size());
-			strict_rebalance(root, _data);
+			deltree(root->left);
+			deltree(root->right);
+			strict_rebalance(root, _data.begin(), _data.end());
 		}
 	}
 }
 
 template<class T>
-void btree<T>::strict_rebalance(typename btree<T>::iterator root, std::vector<T>& vec)
+void btree<T>::strict_rebalance(typename btree<T>::iterator root, typename std::vector<T>::iterator first, typename std::vector<T>::iterator last)
 {
-	typename std::vector<T>::size_type size_of_vec = vec.size();
-	if(root != nullptr)
+	if((root != nullptr) && (last > first))
 	{
-		if(size_of_vec < 1)
+		typename std::vector<T>::size_type break_delim = (last - first) / node_element_constant;
+		unsigned delim_marker = 0;
+		for(typename std::array<node*, node_element_constant+1>::iterator it = (root->children).begin(); it != (root->children).end(); ++it)
 		{
+			(root->data)[break_delim] = *(first + ((break_delim + 1) * delim_marker));
+			if((*it) == nullptr)
+			{
+				node* n = new node(std::array<T, node_element_constant>());
+				(root->children)[it] = n;
+			}
 
+			strict_rebalance(*it, first + (break_delim * delim_marker), first + ((++break_delim) * delim_marker) -1);
 		}
-		else if((size_of_vec % node_element_constant) % 2 == 0)
-		{
-
-		}
-		else if((size_of_vec % node_element_constant) % 2 == 1)
-		{
-
-		}
-
 	}
 }
 
