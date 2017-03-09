@@ -4,6 +4,8 @@
 #include <vector>
 #include <array>
 #include <iostream>
+#include <string>
+#include <sstream>
 
 template<class T>
 class btree
@@ -21,17 +23,67 @@ public:
 	typedef node* iterator;
 	typedef node const* const_iterator;
 
-	struct node
+	class node
 	{
+	public:
 		friend class btree;
-		const unsigned element_constant;
 
-		node(std::array<T, element_constant> _data, std::array<node*, element_constant+1> _children = std::array<node*, element_constant+1>()):
-			data(_data), children(_children), element_constant(node_element_constant) {}
+		node(node** _children = nullptr):
+			children(_children)
+		{
+			data[element_constant];
+		}
 
-		std::array<T, element_constant> data;
-		std::array<node*, element_constant> children;
+		T operator[](int pos)
+		{
+			return data[pos];
+		}
+
+		bool full() const
+		{
+			return (filled_keys >= element_constant);
+		}
+		bool not_full() const
+		{
+			return (filled_keys < element_constant);
+		}
+		bool empty() const
+		{
+			return (filled_keys == 0);
+		}
+
+		T* get_data() const
+		{
+			return data;
+		}
+		node** get_children() const
+		{
+			return children;
+		}
+
+		void add_data(const T& data)
+		{
+			if(full())
+			{
+				this->data[++filled_keys] = data;
+			}
+		}
+		void remove_data(unsigned pos)
+		{
+			for(int i = pos; i < filled_keys; ++i)
+			{
+				data[i] = data[i + 1];
+			}
+		}
+
+	private:
+		T* data;
+		unsigned element_constant;
+		unsigned filled_keys;
+		node** children;
 	};
+
+	friend class node;
 
 	btree(const unsigned n_e_const = 2);
 	btree(const btree& bt);
@@ -78,9 +130,33 @@ private:
 	size_type size(iterator root) const;
 	size_type size(const_iterator root) const;
 
-	const unsigned node_element_constant;
+	unsigned node_element_constant;
 	node* root;
 };
+
+template<class T>
+std::string btree<T>::to_string() const
+{
+	return to_string(this->root);
+}
+
+template<class T>
+std::string btree<T>::to_string(typename btree<T>::iterator root) const
+{
+	std::stringstream ss;
+
+	if(root != nullptr)
+	{
+		std::cout << root->data;
+		ss << root->data;
+		for(int i = 0; i < node_element_constant+1; ++i)
+		{
+			ss << to_string((root->children)[i]);
+		}
+	}
+
+	return ss.str();
+}
 
 template<class T>
 std::ostream& operator<<(std::ostream& os, const btree<T>& ref)
@@ -129,7 +205,7 @@ void quickSort(std::vector<T>& arr, int left, int right) {
 }
 
 template<class T>
-btree<T>::btree(const unsigned n_e_const = 2):
+btree<T>::btree(const unsigned n_e_const):
 	root(nullptr), node_element_constant(n_e_const)
 {}
 
@@ -159,15 +235,29 @@ btree<T>::~btree()
 }
 
 template<class T>
+typename btree<T>::size_type btree<T>::deltree(typename btree<T>::iterator root)
+{
+	if(root != nullptr)
+	{
+		for(unsigned it = 0; it < node_element_constant+1; ++it)
+		{
+			deltree((root->children)[it]);
+		}
+
+		delete root;
+	}
+}
+
+template<class T>
 void btree<T>::rebalance(typename btree<T>::iterator root)
 {
 	if(root != nullptr)
 	{
 		if(comp_child_nodes(root))
 		{
-			for (typename std::array<node*, node_element_constant+1>::iterator it = (root->children).begin(); it != (root->children).end(); ++it)
+			for (int it = 0; it < node_element_constant+1; ++it)
 			{
-				rebalance(*it);
+				rebalance((root->children)[it]);
 			}
 		}
 		else
@@ -188,16 +278,17 @@ void btree<T>::strict_rebalance(typename btree<T>::iterator root, typename std::
 	{
 		typename std::vector<T>::size_type break_delim = (last - first) / node_element_constant;
 		unsigned delim_marker = 0;
-		for(typename std::array<node*, node_element_constant+1>::iterator it = (root->children).begin(); it != (root->children).end(); ++it)
+		for(unsigned it = 0; it < node_element_constant+1; ++it)
 		{
-			(root->data)[break_delim] = *(first + ((break_delim + 1) * delim_marker));
-			if((*it) == nullptr)
+			if(break_delim < node_element_constant)
+				(root->data)[break_delim] = *(first + ((break_delim + 1) * delim_marker));
+			if(((root->children)[it]) == nullptr)
 			{
-				node* n = new node(std::array<T, node_element_constant>());
+				node* n = new node();
 				(root->children)[it] = n;
 			}
 
-			strict_rebalance(*it, first + (break_delim * delim_marker), first + ((++break_delim) * delim_marker) -1);
+			strict_rebalance((root->children)[it], first + (break_delim * delim_marker), first + ((++break_delim) * delim_marker) -1);
 		}
 	}
 }
@@ -211,9 +302,9 @@ std::vector<T> btree<T>::data_to_vector(typename btree<T>::iterator root)
 	{
 		vec.push_back(root->data);
 		
-		for(typename std::array<node*, node_element_constant+1>::iterator it = (root->children).begin(); it != (root->children).end(); ++it)
+		for(unsigned it = 0; it < node_element_constant+1; ++it)
 		{
-			vec.insert(vec.end(), data_to_vector(*it).begin(), data_to_vector(*it).end());
+			vec.insert(vec.end(), data_to_vector((root->children)[it]).begin(), data_to_vector((root->children)[it]).end());
 		}
 	}
 
@@ -226,10 +317,10 @@ bool btree<T>::comp_child_nodes(typename btree<T>::iterator root) const
 	typename btree<T>::size_type min, max;
 	min = size(root);
 	max = 0;
-	for(typename std::array<node*, node_element_constant+1>::iterator it = (root->children).begin(); it != (root->children).end(); ++it)
+	for(unsigned it = 0; it < node_element_constant+1; ++it)
 	{
-		if (size(*it) < min) min = size(*it);
-		if (size(*it) > max) max = size(*it);
+		if (size((root->children)[it]) < min) min = size((root->children)[it]);
+		if (size((root->children)[it]) > max) max = size((root->children)[it]);
 	}
 
 	return (max - min) <= 1;
@@ -241,10 +332,10 @@ bool btree<T>::comp_child_nodes(typename btree<T>::const_iterator root) const
 	typename btree<T>::size_type min, max;
 	min = size(root);
 	max = 0;
-	for(typename std::array<node*, node_element_constant+1>::const_iterator it = (root->children).begin(); it != (root->children).end(); ++it)
+	for(unsigned it = 0; it < node_element_constant+1; ++it)
 	{
-		if (size(*it) < min) min = size(*it);
-		if (size(*it) > max) max = size(*it);
+		if (size((root->children)[it]) < min) min = size((root->children)[it]);
+		if (size((root->children)[it]) > max) max = size((root->children)[it]);
 	}
 
 	return (max - min) <= 1;
@@ -263,9 +354,9 @@ typename btree<T>::size_type btree<T>::size(typename btree<T>::iterator root) co
 	if(root != nullptr)
 	{
 		++count;
-		for(typename std::array<node*, node_element_constant>::iterator it = (root->children).begin(); it != (root->children).end(); ++it)
+		for(unsigned it = 0; it < node_element_constant+1; ++it)
 		{
-			count += size(*it);
+			count += size((root->children)[it]);
 		}
 	}
 
@@ -279,13 +370,46 @@ typename btree<T>::size_type btree<T>::size(typename btree<T>::const_iterator ro
 	if(root != nullptr)
 	{
 		++count;
-		for(typename std::array<node*, node_element_constant>::const_iterator it = (root->children).begin(); it != (root->children).end(); ++it)
+		for(unsigned it = 0; it < node_element_constant+1; ++it)
 		{
-			count += size(*it);
+			count += size((root->children)[it]);
 		}
 	}
 
 	return count;
+}
+
+template<class T>
+typename btree<T>::iterator btree<T>::insert(const T& data)
+{
+	insert(root, data);
+}
+
+template<class T>
+typename btree<T>::iterator btree<T>::insert(const T& data, unsigned count)
+{
+	insert(root, data, count);
+}
+
+template<class T>
+typename btree<T>::iterator btree<T>::insert(typename btree<T>::iterator root, const T& data)
+{
+	if(this->root == nullptr)
+	{
+		node* n = new node();
+
+	}
+	if(root != nullptr)
+	{
+		if(root->not_full())
+		{
+			root->add_data(data);
+		}
+		else
+		{
+			
+		}
+	}
 }
 
 #endif
