@@ -2,414 +2,372 @@
 #define BTREE_H
 
 #include <vector>
-#include <array>
-#include <iostream>
-#include <string>
-#include <sstream>
+#include <algorithm>
 
 template<class T>
 class btree
 {
-
-public:
-	typedef T value_type;
-	typedef T* pointer;
-	typedef T& reference;
-	typedef T const& const_reference;
 	typedef std::size_t size_type;
 
-	class node;
-
-	typedef node* iterator;
-	typedef node const* const_iterator;
+	class internal;
 
 	class node
 	{
 	public:
+		virtual void split()=0;
+		virtual void insert(const T& d)=0;
+		virtual void erase(const T& d)=0;
+		virtual node* search(const T& d)=0;
+		virtual void deltree()=0;
+		virtual void print() const=0;
+		virtual void print_histogram() const=0;
+		virtual void print_keys(unsigned) const=0;
+		virtual void set_parent(internal*)=0;
+	};
+
+	class internal:
+		public node
+	{
+	public:
 		friend class btree;
+		friend class node;
+		friend class leaf;
 
-		node(node** _children = nullptr):
-			children(_children)
+		internal(size_type _m, btree<T>* enc): m(_m), enclosing(enc), parent(nullptr) {}
+		void set_parent(internal* n)
 		{
-			data[element_constant];
+			parent = n;
 		}
-
-		T operator[](int pos)
+		void split()
 		{
-			return data[pos];
-		}
-
-		bool full() const
-		{
-			return (filled_keys >= element_constant);
-		}
-		bool not_full() const
-		{
-			return (filled_keys < element_constant);
-		}
-		bool empty() const
-		{
-			return (filled_keys == 0);
-		}
-
-		T* get_data() const
-		{
-			return data;
-		}
-		node** get_children() const
-		{
-			return children;
-		}
-
-		void add_data(const T& data)
-		{
-			if(full())
+			if(keys.size() > m)
 			{
-				this->data[++filled_keys] = data;
+				internal* nint = new internal(m, enclosing);
+				T midkey = *(keys.begin()+(m/2));
+				for(typename std::vector<T>::iterator i = keys.begin()+(m/2)+1; i != keys.end(); ++i)
+				{
+					nint->keys.push_back(*i);
+				}
+				keys.erase(keys.begin()+(m/2), keys.end());
+
+				for(typename std::vector<node*>::iterator i = children.begin()+((m+1)/2); i != children.end(); ++i)
+				{
+					(*i)->set_parent(nint);
+					nint->children.push_back(*i);
+				}
+				children.erase(children.begin()+((m+1)/2), children.end());
+
+				if(parent == nullptr)
+				{
+					internal* nroot = new internal(m, enclosing);
+					nroot->children.push_back(this);
+
+					this->parent = nroot;
+
+					enclosing->root = nroot;
+				}
+
+				typename std::vector<T>::iterator i = std::lower_bound(parent->keys.begin(), parent->keys.end(), midkey);
+				if(i == parent->keys.end())
+				{
+					parent->children.push_back(nint);
+					parent->keys.push_back(midkey);
+				}
+				else
+				{
+					auto index = std::distance(parent->keys.begin(), i);
+					parent->children.insert(parent->children.begin()+index+1, nint);
+					parent->keys.insert(i, midkey);
+				}
+
+				nint->parent = this->parent;
+
+				parent->split();
 			}
 		}
-		void remove_data(unsigned pos)
+		
+		void insert(const T& d)
 		{
-			for(int i = pos; i < filled_keys; ++i)
+			typename std::vector<T>::iterator i = std::lower_bound(keys.begin(), keys.end(), d);
+			if(i == keys.end())
 			{
-				data[i] = data[i + 1];
+				// call insertion of data d in node at end of parent child vector
+				(*(children.end()-1))->insert(d);
+			}
+			else
+			{
+				// get the distance to the key
+				auto index = std::distance(keys.begin(), i);
+				// call insertion on that node
+				(*(children.begin()+index))->insert(d);
+			}
+		}
+		
+		void erase(const T& d)
+		{
+			if(search(d) != nullptr)
+				search(d)->erase(d);
+		}
+		
+		node* search(const T& d)
+		{
+			typename std::vector<T>::iterator i = std::lower_bound(keys.begin(), keys.end(), d);
+			if(i == keys.end())
+				return ((*(children.end()-1))->search(d));
+			else
+			{
+				auto index = std::distance(keys.begin(), i);
+				return ((*(children.begin()+index))->search(d));
+			}
+		}
+
+		void deltree()
+		{
+			for(typename std::vector<node*>::iterator i = children.begin(); i != children.end(); ++i)
+			{
+				(*i)->deltree();
+			}
+			delete this;
+		}
+
+		void print() const
+		{
+			for(typename std::vector<node*>::const_iterator i = children.begin(); i != children.end(); ++i)
+			{
+				(*i)->print();
+			}
+		}
+
+		void print_histogram() const
+		{
+			for(typename std::vector<node*>::const_iterator i = children.begin(); i != children.end(); ++i)
+			{
+				(*i)->print_histogram();
+			}
+		}
+
+		void print_keys(unsigned height) const
+		{
+			std::cout << "Node at height: " << height++ << '\n';
+			std::cout << "Keys: ";
+			for(typename std::vector<T>::const_iterator i = keys.begin(); i != keys.end(); ++i)
+			{
+				std::cout << *i << ' ';
+			}
+			std::cout << '\n';
+
+			for(typename std::vector<node*>::const_iterator i = children.begin(); i != children.end(); ++i)
+			{
+				(*i)->print_keys(height);
 			}
 		}
 
 	private:
-		T* data;
-		unsigned element_constant;
-		unsigned filled_keys;
-		node** children;
+		btree<T>* enclosing;
+		const size_type m;
+
+		internal* parent;
+		std::vector<T> keys;
+		std::vector<node*> children;
 	};
 
-	friend class node;
+	class leaf:
+		public node
+	{
+	public:
+		friend class btree;
+		friend class node;
+		friend class internal;
 
-	btree(const unsigned n_e_const = 2);
-	btree(const btree& bt);
+		leaf(size_type _m, btree<T>* enc): m(_m), enclosing(enc), parent(nullptr) {}
+		
+		void set_parent(internal* n)
+		{
+			parent = n;
+		}
+
+		void split()
+		{
+			if(data.size() > m)
+			{
+				leaf* nleaf = new leaf(m, enclosing);
+				T midkey = *(data.begin()+(m/2));
+				for(typename std::vector<T>::iterator i = data.begin()+(m/2)+1; i != data.end(); ++i)
+				{
+					nleaf->data.push_back(*i);
+				}
+				data.erase(data.begin()+(m/2)+1, data.end());
+
+				if(parent == nullptr)
+				{
+					internal* ninternal = new internal(m, enclosing);
+					ninternal->children.push_back(this);
+
+					this->parent = ninternal;
+
+					enclosing->root = ninternal;
+				}
+
+				typename std::vector<T>::iterator i = std::lower_bound(parent->keys.begin(), parent->keys.end(), midkey);
+				if(i == parent->keys.end())
+				{
+					parent->children.push_back(nleaf);
+					parent->keys.push_back(midkey);
+				}
+				else
+				{
+					auto index = std::distance(parent->keys.begin(), i);
+					parent->children.insert(parent->children.begin()+index+1, nleaf);
+					parent->keys.insert(i, midkey);
+				}
+
+				nleaf->parent = this->parent;
+
+				parent->split();
+			}
+		}
+		void insert(const T& d)
+		{
+			if(search(d) == nullptr)
+			{
+				typename std::vector<T>::iterator i = std::lower_bound(data.begin(), data.end(), d);
+				data.insert(i, d);
+				split();
+			}
+		}
+		void erase(const T& d)
+		{
+			for(typename std::vector<T>::iterator i = data.begin(); i != data.end(); ++i)
+			{
+				if(*i == d)
+				{
+					data.erase(i);
+					return;
+				}
+			}
+		}
+		node* search(const T& d)
+		{
+			for(typename std::vector<T>::iterator i = data.begin(); i != data.end(); ++i)
+			{
+				if(*i == d) return this;
+			}
+			return nullptr;
+		}
+
+		void deltree()
+		{
+			delete this;
+		}
+
+		void print() const
+		{
+			for(typename std::vector<T>::const_iterator i = data.begin(); i != data.end(); ++i)
+			{
+				std::cout << *i << ' ';
+			}
+			std::cout << "| ";
+		}
+
+		void print_histogram() const
+		{
+			for(typename std::vector<T>::const_iterator i = data.begin(); i != data.end(); ++i)
+			{
+				std::cout << "x ";
+			}
+			std::cout << '\n';
+		}
+
+		void print_keys(unsigned a) const
+		{
+			std::cout << "Leaf at height: " << a << "\n| ";
+			print();
+			std::cout << '\n';
+		}
+
+	private:
+		btree<T>* enclosing;
+		const size_type m;
+
+		internal* parent;
+		std::vector<T> data;
+	};
+
+public:
+	btree(size_type _m): m(_m), root(new leaf(_m, this)) {}
+
+	void insert(const T&);
+	void erase(const T&);
+	void deltree(node*);
+	void clear();
+	node* search(const T&) const;
+
+	void print() const;
+	void print_histogram() const;
+	void print_keys() const;
+	std::vector<T>& data_to_vector() const;
+
 	~btree();
 
-	btree<T>& operator=(const btree<T>&);
-
-	bool empty() const;
-	void clear();
-
-	iterator erase(const T& data);
-	size_type deltree(iterator root);
-
-	iterator insert(const T& data);
-	iterator insert(const T& data, unsigned count);
-	iterator insert(iterator root, const T& data);
-	iterator insert(const_iterator root, const T& data);
-	iterator insert(iterator root, const T& data, unsigned count);
-	iterator insert(const_iterator root, const T& data, unsigned count);
-
-	size_type size() const;
-
-	std::pair<iterator, size_type> search(const T& data);
-
-	std::string to_string() const;
-	std::string to_string(iterator root) const;
-	std::string to_string(std::stringstream& ss, iterator root) const;
-
-	template<class E>
-	friend std::ostream& operator<<(std::ostream&, const btree<E>&);
-	template<class E>
-	friend std::istream& operator>>(std::istream&, btree<E>&);
-	template<class E>
-	friend void quicksort(std::vector<E>& arr, int left, int right);
-
 private:
-	void rebalance(iterator root);
-	void strict_rebalance(iterator root, typename std::vector<T>::iterator first, typename std::vector<T>::iterator last);
-
-	std::vector<T> data_to_vector(iterator root);
-
-	bool comp_child_nodes(iterator root) const;
-	bool comp_child_nodes(const_iterator root) const;
-	size_type size(iterator root) const;
-	size_type size(const_iterator root) const;
-
-	unsigned node_element_constant;
 	node* root;
+	const size_type m;
 };
-
-template<class T>
-std::string btree<T>::to_string() const
-{
-	return to_string(this->root);
-}
-
-template<class T>
-std::string btree<T>::to_string(typename btree<T>::iterator root) const
-{
-	std::stringstream ss;
-
-	if(root != nullptr)
-	{
-		std::cout << root->data;
-		ss << root->data;
-		for(int i = 0; i < node_element_constant+1; ++i)
-		{
-			ss << to_string((root->children)[i]);
-		}
-	}
-
-	return ss.str();
-}
-
-template<class T>
-std::ostream& operator<<(std::ostream& os, const btree<T>& ref)
-{
-	os << (ref.to_string());
-	return os;
-}
-
-template<class T>
-std::istream& operator>>(std::istream& is, btree<T>& ref)
-{
-	T data;
-	is >> data;
-	ref.insert(data);
-	return is;
-}
-
-template<class T>
-void quickSort(std::vector<T>& arr, int left, int right) {
-	int i = left, j = right;
-	int tmp;
-	T pivot = arr[(left + right) / 2];
- 
-	/* partition */
-	while (i <= j)
-	{
-		while (arr[i] < pivot)
-			i++;
-		while (arr[j] > pivot)
-			j--;
-		if (i <= j)
-		{
-			tmp = arr[i];
-			arr[i] = arr[j];
-			arr[j] = tmp;
-			i++;
-			j--;
-		}
-	};
- 
-	/* recursion */
-	if (left < j)
-		quickSort(arr, left, j);
-	if (i < right)
-		quickSort(arr, i, right);
-}
-
-template<class T>
-btree<T>::btree(const unsigned n_e_const):
-	root(nullptr), node_element_constant(n_e_const)
-{}
-
-template<class T>
-btree<T>::btree(const btree<T>& bt):
-	root(nullptr)
-{
-	this->operator=(bt);
-}
-
-template<class T>
-bool btree<T>::empty() const
-{
-	return size()==0;
-}
-
-template<class T>
-void btree<T>::clear()
-{
-	deltree(root);
-}
 
 template<class T>
 btree<T>::~btree()
 {
 	clear();
+	delete this->root;
 }
 
 template<class T>
-typename btree<T>::size_type btree<T>::deltree(typename btree<T>::iterator root)
+void btree<T>::insert(const T& d)
 {
-	if(root != nullptr)
-	{
-		for(unsigned it = 0; it < node_element_constant+1; ++it)
-		{
-			deltree((root->children)[it]);
-		}
-
-		delete root;
-	}
+	this->root->insert(d);
 }
 
 template<class T>
-void btree<T>::rebalance(typename btree<T>::iterator root)
+void btree<T>::erase(const T& d)
 {
-	if(root != nullptr)
-	{
-		if(comp_child_nodes(root))
-		{
-			for (int it = 0; it < node_element_constant+1; ++it)
-			{
-				rebalance((root->children)[it]);
-			}
-		}
-		else
-		{
-			std::vector<T> _data = data_to_vector(root);
-			quicksort(_data, 0, _data.size());
-			deltree(root->left);
-			deltree(root->right);
-			strict_rebalance(root, _data.begin(), _data.end());
-		}
-	}
+	this->root->erase(d);
 }
 
 template<class T>
-void btree<T>::strict_rebalance(typename btree<T>::iterator root, typename std::vector<T>::iterator first, typename std::vector<T>::iterator last)
+void btree<T>::deltree(node* n)
 {
-	if((root != nullptr) && (last > first))
-	{
-		typename std::vector<T>::size_type break_delim = (last - first) / node_element_constant;
-		unsigned delim_marker = 0;
-		for(unsigned it = 0; it < node_element_constant+1; ++it)
-		{
-			if(break_delim < node_element_constant)
-				(root->data)[break_delim] = *(first + ((break_delim + 1) * delim_marker));
-			if(((root->children)[it]) == nullptr)
-			{
-				node* n = new node();
-				(root->children)[it] = n;
-			}
-
-			strict_rebalance((root->children)[it], first + (break_delim * delim_marker), first + ((++break_delim) * delim_marker) -1);
-		}
-	}
+	n->deltree();
 }
 
 template<class T>
-std::vector<T> btree<T>::data_to_vector(typename btree<T>::iterator root)
+void btree<T>::clear()
 {
-	std::vector<T> vec;
-
-	if(root != nullptr)
-	{
-		vec.push_back(root->data);
-		
-		for(unsigned it = 0; it < node_element_constant+1; ++it)
-		{
-			vec.insert(vec.end(), data_to_vector((root->children)[it]).begin(), data_to_vector((root->children)[it]).end());
-		}
-	}
-
-	return vec;
+	deltree(this->root);
+	this->root = new leaf(m, this);
 }
 
 template<class T>
-bool btree<T>::comp_child_nodes(typename btree<T>::iterator root) const
+void btree<T>::print() const
 {
-	typename btree<T>::size_type min, max;
-	min = size(root);
-	max = 0;
-	for(unsigned it = 0; it < node_element_constant+1; ++it)
-	{
-		if (size((root->children)[it]) < min) min = size((root->children)[it]);
-		if (size((root->children)[it]) > max) max = size((root->children)[it]);
-	}
-
-	return (max - min) <= 1;
+	this->root->print();
 }
 
 template<class T>
-bool btree<T>::comp_child_nodes(typename btree<T>::const_iterator root) const
+void btree<T>::print_histogram() const
 {
-	typename btree<T>::size_type min, max;
-	min = size(root);
-	max = 0;
-	for(unsigned it = 0; it < node_element_constant+1; ++it)
-	{
-		if (size((root->children)[it]) < min) min = size((root->children)[it]);
-		if (size((root->children)[it]) > max) max = size((root->children)[it]);
-	}
-
-	return (max - min) <= 1;
+	this->root->print_histogram();
 }
 
 template<class T>
-typename btree<T>::size_type btree<T>::size() const
+void btree<T>::print_keys() const
 {
-	return size(root);
+	this->root->print_keys(0);
 }
 
 template<class T>
-typename btree<T>::size_type btree<T>::size(typename btree<T>::iterator root) const
+typename btree<T>::node* btree<T>::search(const T& d) const
 {
-	int count = 0;
-	if(root != nullptr)
-	{
-		++count;
-		for(unsigned it = 0; it < node_element_constant+1; ++it)
-		{
-			count += size((root->children)[it]);
-		}
-	}
-
-	return count;
-}
-
-template<class T>
-typename btree<T>::size_type btree<T>::size(typename btree<T>::const_iterator root) const
-{
-	int count = 0;
-	if(root != nullptr)
-	{
-		++count;
-		for(unsigned it = 0; it < node_element_constant+1; ++it)
-		{
-			count += size((root->children)[it]);
-		}
-	}
-
-	return count;
-}
-
-template<class T>
-typename btree<T>::iterator btree<T>::insert(const T& data)
-{
-	insert(root, data);
-}
-
-template<class T>
-typename btree<T>::iterator btree<T>::insert(const T& data, unsigned count)
-{
-	insert(root, data, count);
-}
-
-template<class T>
-typename btree<T>::iterator btree<T>::insert(typename btree<T>::iterator root, const T& data)
-{
-	if(this->root == nullptr)
-	{
-		node* n = new node();
-
-	}
-	if(root != nullptr)
-	{
-		if(root->not_full())
-		{
-			root->add_data(data);
-		}
-		else
-		{
-			
-		}
-	}
+	return this->root->search(d);
 }
 
 #endif
