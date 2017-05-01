@@ -10,6 +10,7 @@
 
 namespace error
 {
+	// base
 	struct base : std::exception
 	{
 		virtual void format_error_message()const = 0;
@@ -23,16 +24,6 @@ namespace error
 		mutable char error_message_buffer[256];
 	};
 
-	struct with_array_index
-	{
-		with_array_index():
-			array_index(0) {}
-
-		void set_array_index(const int a)
-			{ array_index = a; }
-
-		int array_index;
-	};
 
 	struct with_errno
 	{
@@ -47,6 +38,18 @@ namespace error
 		}
 
 		int errno_value;
+	};
+
+	/* array errors */
+	struct with_array_index
+	{
+		with_array_index():
+			array_index(0) {}
+
+		void set_array_index(const int a)
+			{ array_index = a; }
+
+		int array_index;
 	};
 
 	struct array_index_out_of_bounds:
@@ -69,8 +72,9 @@ namespace error
 					array_index);
 			}
 		}
-	};
+	}; /* array errors end */
 
+	/* iterator errors */
 	struct with_iterator_range
 	{
 		with_iterator_range()
@@ -106,7 +110,120 @@ namespace error
 					iterator_range.first, iterator_range.second);
 			}
 		}
+	}; /* end iterator errors */
+
+	/* math errors */
+	#include <cmath>
+
+
+	struct with_coord /* "with coordinate" base virtual function holder */
+	{
+		virtual int check_dimensions()=0;
 	};
+
+	#include "math\cartesian.h"
+	struct with_cartesian: /* cartesian coordinate base */
+		virtual with_coord
+	{
+		with_cartesian()
+		{
+			this->init_cartesian();
+		}
+
+		void init_cartesian()
+		{
+			dimensions = 0;
+			x = INFINITY;
+			y = INFINITY;
+			z = INFINITY;
+		}
+
+		void set_cartesian(coord c)
+		{
+			int i = 3;
+			for( ; i > 0; --i)
+			{
+				switch(i)
+				{
+					case 0: if(c.x != INFINITY) ++dimensions; this->x = c.x; break;
+					case 1: if(c.y != INFINITY) ++dimensions; this->y = c.y; break;
+					case 2: if(c.z != INFINITY) ++dimensions; this->z = c.z; break;
+				}
+			}
+		}
+
+		int check_dimensions(int d)
+		{
+			dimensions = 0;
+			if(this->x != INFINITY) ++dimensions;
+			if(this->y != INFINITY) ++dimensions;
+			if(this->z != INFINITY) ++dimensions;
+			return dimensions;
+		}
+
+		int dimensions;
+		double x;
+		double y;
+		double z;
+	}; /* cartesian coordinate base setup end */
+
+	#include "polar.h"
+	struct with_polar:
+		virtual with_coord
+	{
+		with_polar()
+		{
+			this->init_polar();
+		}
+
+		void init_polar()
+		{
+			dimensions = 0;
+			radial = INFINITY;
+			degree = INFINITY;
+			azimuth = INFINITY;
+		}
+
+		void set_polar(polar p)
+		{
+			int i = 3;
+			for( ; i > 0; --i)
+			{
+				switch(i)
+				{
+					case 0: if(p.radial != INFINITY) ++dimensions; this->radial = p.radial; break;
+					case 1: if(p.degree != INFINITY) ++dimensions; this->degree = p.degree; break;
+					case 2: if(p.azimuth != INFINITY) ++dimensions; this->azimuth = p.azimuth; break;
+				}
+			}
+		}
+
+		int check_dimensions()
+		{
+			dimensions = 0;
+			if(this->radial != INFINITY) ++dimensions;
+			if(this->degree != INFINITY) ++dimensions;
+			if(this->azimuth != INFINITY) ++dimensions;
+			return dimensions;
+		}
+
+		int dimensions;
+		double radial;
+		double degree;
+		double azimuth;
+	};
+
+	struct needs_more_data_to_convert:
+		base,
+		with_cartesian,
+		with_polar
+	{
+		void format_error_message()const
+		{
+		}
+	}
+
+
 };
 
 #endif

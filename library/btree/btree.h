@@ -18,6 +18,9 @@ class btree
 		virtual void insert(const T& d)=0;
 		virtual void erase(const T& d)=0;
 		virtual node* search(const T& d)=0;
+		virtual size_type size() const=0;
+		virtual size_type leaf_count() const=0;
+		virtual size_type depth(size_type&)=0;
 		virtual void deltree()=0;
 		virtual void print() const=0;
 		virtual void print_histogram() const=0;
@@ -119,6 +122,32 @@ class btree
 				auto index = std::distance(keys.begin(), i);
 				return ((*(children.begin()+index))->search(d));
 			}
+		}
+
+		size_type size() const
+		{
+			size_type count = 0;
+			for(typename std::vector<node*>::const_iterator i = children.begin(); i != children.end(); ++i)
+			{
+				count += (*i)->size();
+			}
+			return count;
+		}
+
+		size_type leaf_count() const
+		{
+			size_type count = 0;
+			for(typename std::vector<node*>::const_iterator i = children.begin(); i != children.end(); ++i)
+			{
+				count += (*i)->leaf_count();
+			}
+			return count;
+		}
+
+		size_type depth(size_type& height)
+		{
+			children[0]->depth(++height);
+			return height;
 		}
 
 		void deltree()
@@ -255,6 +284,21 @@ class btree
 			return nullptr;
 		}
 
+		size_type size() const
+		{
+			return data.size();
+		}
+
+		size_type leaf_count() const
+		{
+			return 1;
+		}
+
+		size_type depth(size_type& height)
+		{
+			return ++height;
+		}
+
 		void deltree()
 		{
 			delete this;
@@ -301,6 +345,9 @@ public:
 	void deltree(node*);
 	void clear();
 	node* search(const T&) const;
+	size_type size() const;
+	size_type leaf_count() const;
+	size_type depth();
 
 	void print() const;
 	void print_histogram() const;
@@ -368,6 +415,25 @@ template<class T>
 typename btree<T>::node* btree<T>::search(const T& d) const
 {
 	return this->root->search(d);
+}
+
+template<class T>
+typename btree<T>::size_type btree<T>::size() const
+{
+	return this->root->size();
+}
+
+template<class T>
+typename btree<T>::size_type btree<T>::leaf_count() const
+{
+	return this->root->leaf_count();
+}
+
+template<class T>
+typename btree<T>::size_type btree<T>::depth()
+{
+	size_type size = 0;
+	return this->root->depth(size);
 }
 
 #endif

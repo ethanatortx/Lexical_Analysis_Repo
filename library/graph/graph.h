@@ -1,213 +1,123 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include <functional>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <map>
 #include <iostream>
 #include <utility>
 
-//////////////////////////////////////////////////////////////////
-//																//
-//					Graph Base Class							//
-//																//
-//////////////////////////////////////////////////////////////////
-template<class T,
-		 class Hash = std::hash<T>>
+using std::string;
+using std::vector;
+using std::map;
+
 class graph
 {
 public:
-};
 
-//////////////////////////////////////////////////////////////////
-//																//
-//					Graph List Implementation					//
-//																//
-//////////////////////////////////////////////////////////////////
-template<class T,
-		 class Hash = std::hash<T>>
-class graph_list:
-	public graph<T, Hash>
-{
-public:
-	class iterator;
-	class const_iterator;
-	class Node;
+	struct node;
 
-private:
-	friend class graph_list<T, Hash>::iterator;
-	friend class graph_list<T, Hash>::const_iterator;
+	struct edge
+	{
+		string end;
+		double cost;
+	};
 
-	void insert(const T&, Node**, graph_list<T, Hash>::iterator&);
-	void insert(const T&, Node**, graph_list<T, Hash>::const_iterator&);
+	graph();
+	~graph();
 
-public:
-	void insert(const T&, Node**);
-	void insert(T&&, Node**);
-
-private:
-
-};
-
-//////////////////////////////////////////////////////////////////
-//																//
-//					Graph Matrix Implementation					//
-//																//
-//////////////////////////////////////////////////////////////////
-template<class T,
-		 class Hash = std::hash<T>>
-class graph_matrix:
-	public graph<T, Hash>
-{
-	class Node;
-
-protected:
-	typedef T value_type;
-	typedef T* pointer;
-	typedef T& reference;
-	typedef const T& const_reference;
-	typedef std::size_t size_type;
-
-public:
-	graph_matrix();
-
-	class iterator;
-	class const_iterator;
-
-private:
-	void insert(const T&, Node**, graph_matrix<T, Hash>::iterator&);
-	void insert(const T&, Node**, graph_matrix<T, Hash>::const_iterator&);
-
-public:
 	bool empty() const;
-
 	void clear();
 
-	void insert(const T&, Node**);
-	void insert(T&&, Node**);
+	void erase(string name);
+	void insert(string name);
+	void insert(string name, vector<edge> evec);
 
-	bool is_edge(Node*, Node*);
-	bool is_edge(const graph_matrix<T, Hash>::iterator&, const graph_matrix<T, Hash>::iterator&);
-	bool is_edge(const graph_matrix<T, Hash>::const_iterator&, const graph_matrix<T, Hash>::const_iterator&);
+	vector<edge> get_adjacent(string name);
+	void set_adjacent(string name, vector<edge> adjacent);
 
-	void set_edge(Node*, Node*, bool);
-	void set_edge(const graph_matrix<T, Hash>::iterator&, const graph_matrix<T, Hash>::iterator&, bool);
-	void set_edge(const graph_matrix<T, Hash>::const_iterator&, const graph_matrix<T, Hash>::const_iterator&, bool);
+	std::pair<vector<edge>::iterator&, bool> is_edge(string first, string last);
+	void add_edge(string first, string last, double cost = 0.0);
+	void erase_edge(string first, string last);
 
-	void erase(Node*);
-	void erase(const Node*);
-	void erase(const graph_matrix<T, Hash>::iterator&);
-	void erase(const graph_matrix<T, Hash>::const_iterator&);
+	string to_string() const;
 
-	typename graph_matrix<T, Hash>::size_type path(Node*, Node*);
-	typename graph_matrix<T, Hash>::size_type path(const Node*, const Node*);
-	typename graph_matrix<T, Hash>::size_type path(const graph_matrix<T, Hash>::iterator&, const graph_matrix<T, Hash>::iterator&);
-	typename graph_matrix<T, Hash>::size_type path(const graph_matrix<T, Hash>::const_iterator&, const graph_matrix<T, Hash>::const_iterator&);
-
-	~graph_matrix();
+	vector<edge> get_path(string first, string last);
 
 private:
-	bool** chk_arr;
+	map<string, vector<edge> > nmap;
 };
 
-
-template<class T,
-		 class Hash>
-class graph_matrix<T, Hash>::const_iterator
+graph::graph()
 {
-	typedef T value_type;
-	typedef T* pointer;
-	typedef T& reference;
-	typedef std::bidirectional_iterator_tag iterator_category;
-	typedef std::ptrdiff_t difference_type;
 
-public:
-	const_iterator(const graph_matrix<T, Hash>::Node* _ref):
-		ref(_ref) {}
-	const_iterator(const graph_matrix<T, Hash>::iterator& other):
-		ref(other.ref) {}
-	const_iterator(const graph_matrix<T, Hash>::const_iterator& other):
-		ref(other.ref) {}
-
-	template<class E, class Hash_E>
-	friend bool operator==(const typename graph_matrix<E, Hash_E>::const_iterator&, const typename graph_matrix<E, Hash_E>::const_iterator&);
-	template<class E, class Hash_E>
-	friend bool operator!=(const typename graph_matrix<E, Hash_E>::const_iterator&, const typename graph_matrix<E, Hash_E>::const_iterator&);
-
-	typename graph_matrix<T, Hash>::const_iterator& operator=(const typename graph_matrix<T, Hash>::const_iterator& other) {}
-
-	typename graph_matrix<T, Hash>::const_iterator& operator++() {}
-	typename graph_matrix<T, Hash>::const_iterator operator++(int) {}
-
-	typename graph_matrix<T, Hash>::const_iterator& operator--() {}
-	typename graph_matrix<T, Hash>::const_iterator operator--(int) {}
-
-	typename graph_matrix<T, Hash>::const_iterator::reference operator*() const {}
-	std::pair<const typename graph_matrix<T, Hash>::Node*, const typename graph_matrix<T, Hash>::Node**> * operator->() const {}
-
-private:
-	const typename graph_matrix<T, Hash>::Node* ref;
-};
-
-template<class T, class Hash = std::hash<T>>
-bool operator==(const typename graph_matrix<T, Hash>::const_iterator& lhs, const typename graph_matrix<T, Hash>::const_iterator& rhs) {}
-template<class T, class Hash = std::hash<T>>
-bool operator!=(const typename graph_matrix<T, Hash>::const_iterator& lhs, const typename graph_matrix<T, Hash>::const_iterator& rhs) {}
-
-template<class T,
-		 class Hash>
-class graph_matrix<T, Hash>::iterator:
-	public graph_matrix<T, Hash>::const_iterator
+}
+inline bool graph::empty() const
+{ return nmap.empty(); }
+inline void graph::clear()
+{ nmap.clear(); }
+inline void graph::erase(string name)
+{ nmap.erase(name); }
+inline void graph::insert(string name, vector<edge> evec)
+{ nmap.emplace(name, evec); }
+inline void graph::insert(string name)
 {
-	typedef T value_type;
-	typedef T* pointer;
-	typedef T& reference;
-	typedef std::bidirectional_iterator_tag iterator_category;
-	typedef std::ptrdiff_t difference_type;
-
-public:
-	iterator(typename graph_matrix<T, Hash>::Node* _ref):
-		ref(_ref) {}
-	iterator(const typename graph_matrix<T, Hash>::iterator& other):
-		ref(other.ref) {}
-
-	template<class E, class Hash_E>
-	friend bool operator==(const typename graph_matrix<E, Hash_E>::iterator&, const typename graph_matrix<E, Hash_E>::iterator&);
-	template<class E, class Hash_E>
-	friend bool operator!=(const typename graph_matrix<E, Hash_E>::iterator&, const typename graph_matrix<E, Hash_E>::iterator&);
-
-	typename graph_matrix<T, Hash>::iterator& operator=(const typename graph_matrix<T, Hash>::iterator& other) {}
-
-	typename graph_matrix<T, Hash>::iterator& operator++() {}
-	typename graph_matrix<T, Hash>::iterator operator++(int) {}
-
-	typename graph_matrix<T, Hash>::iterator& operator--() {}
-	typename graph_matrix<T, Hash>::iterator operator--(int) {}
-
-	typename graph_matrix<T, Hash>::iterator::reference operator*() const {}
-	std::pair<typename graph_matrix<T, Hash>::Node*, typename graph_matrix<T, Hash>::Node**> * operator->() const {}
-
-	typename graph_matrix<T, Hash>::iterator& swap(typename graph_matrix<T, Hash>::iterator& other) {}
-
-private:
-	typename graph_matrix<T, Hash>::Node* ref;
-};
-
-template<class T, class Hash = std::hash<T>>
-bool operator==(const typename graph_matrix<T, Hash>::iterator& lhs, const typename graph_matrix<T, Hash>::iterator& rhs) {}
-template<class T, class Hash = std::hash<T>>
-bool operator!=(const typename graph_matrix<T, Hash>::iterator& lhs, const typename graph_matrix<T, Hash>::iterator& rhs) {}
-
-template<class T,
-		 class Hash>
-class graph_matrix<T, Hash>::Node
+	vector<edge> evec;
+	insert(name, evec);
+}
+inline vector<typename graph::edge> graph::get_adjacent(string name)
+{ return nmap[name]; }
+inline void graph::set_adjacent(string name, vector<edge> adjacent)
+{ nmap[name] = adjacent; }
+std::pair<vector<typename graph::edge>::iterator&, bool> graph::is_edge(string first, string last)
 {
-public:
-	Node(const T& _data, Node** _ref = nullptr):
-		data(_data), ref(_ref) {}
+	vector<edge>::iterator it = (nmap[first]).begin();
+	for(; it != (nmap[first]).end(); ++it)
+	{
+		if(it->end == last) return std::pair<vector<typename graph::edge>::iterator&, bool>(it, true); 
+	}
 
-	T data;
-	Node** ref;
-};
+	return std::pair<vector<typename graph::edge>::iterator&, bool>(it, false);
+}
+inline void graph::add_edge(string first, string last, double cost)
+{
+	graph::edge e;
+	e.end = last;
+	e.cost = cost;
+	nmap[first].push_back(e);
+}
+void graph::erase_edge(string first, string last)
+{
+	for(vector<edge>::iterator it = (nmap[first]).begin(); it != (nmap[first]).end(); ++it)
+	{
+		if(it->end == last)
+		{
+			nmap[first].erase(it);
+			break;
+		}
+	}
+}
+string graph::to_string() const
+{
+	std::stringstream ss;
+	for(map<string, vector<edge> >::const_iterator m_it = nmap.begin(); m_it != nmap.end(); ++m_it)
+	{
+		ss << m_it->first << '\n';
 
-// graph matrix public method declaration
+		for(vector<edge>::const_iterator v_it = (m_it->second).begin(); v_it != (m_it->second).end(); ++v_it)
+		{
+			ss << v_it->end << " : " << v_it->cost << '\n';
+		}
+	}
+
+	return (ss.str());
+}
+vector<typename graph::edge> graph::get_path(string first, string last)
+{
+
+}
+
+graph::~graph() {}
 
 #endif
