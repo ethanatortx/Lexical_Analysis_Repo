@@ -1,3 +1,4 @@
+from datetime import datetime
 try:
      # Python 2.6-2.7 
      from HTMLParser import HTMLParser
@@ -6,36 +7,44 @@ except ImportError:
      from html.parser import HTMLParser
 import urllib.request as u
 import csv
-global myDict
-myDict = { }
-def check_conditions(i):
-     banned_phrases = ['all rights reserved', 'copyright', 'writen by', 'newsletter', 'password']
-     for phrase in banned_phrases:
-          if(phrase.lower() in i.lower()):
+global dictionary_of_sentences
+dictionary_of_sentences = [ ]
+def word_is_interesting(word):
+     listOfBad = ["a", "an", "the", "or", "he", "her", "they", "but", "who", "has", "for", "from", "and", "was", "your", "you", "that", "have", "with", "his", "her", "this", "will", "our", "not", "all", "than", "how", "since", "also", "about", "still", "had", "been", "can", "its", "it's", "are", "were"]
+     for w in listOfBad:
+          if w.lower()==word.lower():
                return False
-     banned_groups = [ ['create', 'new', 'password'], ['Please', 'confirm', 'the', 'information', 'below'], ['readers', 'like', 'you'], ['read', 'our'], ['cookie', 'advertising', 'policy'], ['disable', 'ad', 'blocker'], ['share', 'this', 'video'], ['watch', 'this', 'video'], ['watch', 'next'], ['sign', 'in']]
+     return True
+
+def sentence_is_good(toCheck):
+     if (toCheck == toCheck.upper()):
+          return False
+     banned_words = ['copyright', 'writen by', 'newsletter', 'password', 'subscribe']
+     for phrase in banned_words:
+          if(phrase.lower() in toCheck.lower()):
+               return False
+     banned_groups = [ ['create', 'new', 'password'], ['all', 'rights', 'reserved'], ['Please', 'confirm', 'the', 'information', 'below'], ['readers', 'like', 'you'], ['read', 'our'], ['cookie', 'advertising', 'policy'], ['disable', 'ad', 'blocker'], ['share', 'this', 'video'], ['watch', 'this', 'video'], ['watch', 'next'], ['sign', 'in'], ['copy', 'this', 'your', 'clipboard'] ]
      for group in banned_groups:
           strikes = 0
           for item in group:
-               if(item.lower() in i.lower()):
+               if(item.lower() in toCheck.lower()):
                     strikes+=1
-          if strikes/len(group)>.5:
+          if (strikes/len(group))>.5:
                return False
-     if (i == i.upper()):
-          return False
      return True
-def analyze(article, searchTerm, followLinks):
+
+def analyze(article, search_term, followLinks):
      h = HTMLParser()
      try:
           response = u.urlopen(article)
      except:
           return
-     html = response.read()
-     html = html.decode()
-     temp = ""
-     
+     #Try to open the page. If it doesn't work, exit the page.
+
+     html = response.read().decode()
+     temp = ""     
      title = "No Title"
-     arrOfSentences = []
+     array_of_sentences = []
      pos = 0
      bracketOn = False
      ampersandOn = False
@@ -49,7 +58,8 @@ def analyze(article, searchTerm, followLinks):
                bracketOn = True
                if(temp[-1:] in ".!?") or html[pos+1:pos+2] == "/a":
                     if temp != "":
-                         arrOfSentences.append(temp)
+                         #print(temp)
+                         array_of_sentences.append(temp)
                temp = ""
           elif i=="&":
                ampersandOn = False
@@ -59,7 +69,7 @@ def analyze(article, searchTerm, followLinks):
                     try:
                          temp2+=html[pos]
                     except:
-                         return
+                         break
                temp+=h.unescape(temp2)
           elif not bracketOn:
                temp+=str(i)
@@ -74,7 +84,7 @@ def analyze(article, searchTerm, followLinks):
                               pos+=1
                               tempStr+=html[pos]
                          if("https://" in tempStr or "http://" in tempStr) and followLinks:
-                              if(searchTerm.lower() in tempStr.lower()):
+                              if(search_term.lower() in tempStr.lower()):
                                    siteList.append(tempStr)
                     if('title' in html[pos:pos+6].lower()):
                          pos+=1
@@ -88,34 +98,42 @@ def analyze(article, searchTerm, followLinks):
                          title = tempStr
           pos+=1
           strLast = i
-     arrOfSentences.append(temp)
+     #Everything above this point really just functions as sketchy regex
+     #Todo... replace this with actual regex
      title = h.unescape(title)
-     if ("twitter" in title or "google plus" in title or "facebook" in title or searchTerm.lower() not in title.lower()):
-          return None
+     if ("google plus" in title or "facebook" in title or search_term.lower() not in title.lower()):
+          return
      fixedTitle = ""
      for i in title:
-          if i.lower() in 'abcdefghijklmnopqrstuvwxyz1234567890':
+          if i.lower() in 'abcdefghijklmnopqrstuvwxyz1234567890\':':
                fixedTitle+=i
           else:
-               fixedTitle+=" "
+               if(fixedTitle[:-1] != " "):
+                    fixedTitle+=" "
+               #Make sure not to add two spaces in a row
+
      text_file = open(fixedTitle+".txt", "w")
-     global myDict
-     for sentence in siteList:
-          print(sentence)
-     for i in arrOfSentences:
-           if check_conditions(i):
-               for word in sentence:
-                    if( myDict[word] == None):
-                         myDict[word] = 0
-                    myDict[word]+1
-               text_file.write(i)
+     #Make a text file
+     global dictionary_of_sentences
+     dictionary_of_sentences.append(array_of_sentences)
+     for sentence in array_of_sentences:
+          if sentence_is_good(sentence):
+               text_file.write(sentence)
                text_file.write('\n\n')
      text_file.close()
      print("Analyzed: " + title)
-     return siteList
-searchTerm = input("Search Term: ")
+search_term = input("Search Term: ")
+analyzeGoal = 5
+numberArticles = input("Analyze how many articles? ")
+if(numberArticles.isnumeric()):
+     analyzeGoal= int(numberArticles)
+else:
+     print("That wasn't a number!")
+     time.sleep(1000)
+start = datetime.now()
+
 q = 'https://www.google.com/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8#safe=strict&tbm=nws&q=senate'
-q = "https://news.google.com/news?q=" + searchTerm.replace(" ", "+") + "&output=rss"
+q = "https://news.google.com/news?q=" + search_term.replace(" ", "+") + "&output=rss"
 q.encode('utf-8').strip()
 listOfArticles = []
 h = HTMLParser()
@@ -123,33 +141,51 @@ response = u.urlopen(q)
 html = response.read()
 html = html.decode()
 pos = 0
-totalAnalyzed = 0
-while pos < len(html) and totalAnalyzed < 10:
+number_analyzed_articles = 0
+while pos < len(html) and number_analyzed_articles < analyzeGoal:
      if (html[pos:pos+4] == "http"):
           tempStr = ""
           while(html[pos] != "&"):
                tempStr+=html[pos]
                pos+=1
-          #print(tempStr)
-          if "twitter" not in tempStr and "thehill" not in tempStr and "news.google" not in tempStr and "nytimes" not in tempStr and "youtube" not in tempStr:
-               #The New York Times doesn't play nice with Python's urllib
+          if "thehill" not in tempStr and "news.google" not in tempStr and "youtube" not in tempStr:
+               #Note: The New York Times doesn't play nice with Python's urllib
+               #At one point, the New York Times was banned as a source
                try:
-                    for i in analyze(tempStr, searchTerm, False):
-                         print(i)
-                         listOfArticles.append(i)
+                    analyze(tempStr, search_term, False)
+                    number_analyzed_articles+=1
                except:
-                    totalAnalyzed -=1
-               totalAnalyzed+=1
+                    number_analyzed_articles -=1
      pos+=1
-     if len(listOfArticles) > 20:
-          pos = len(html)
-for article in listOfArticles:
-     analyze(article, searchTerm, False)
-print("################")
-print("### Finished ###")
-print("################")
-print(myDict)
-for word in myDict:
-     print(word)
-     print(myDict[word])
-     print("")          
+
+popularWords = { }
+
+number_of_words = 0
+for article in dictionary_of_sentences:
+     for sentence in article:
+          for word in sentence.split(" "):
+               number_of_words+=1
+               try:
+                    if(popularWords[word.lower()]):            
+                         popularWords[word.lower()]+=1
+                    else:
+                         popularWords[word.lower()]=1
+               except:
+                    if len(word)<10 and len(word)>2 and "<" not in word and ">" not in word:
+                         popularWords[word.lower()] = 1
+
+good_words_array = []
+for word in popularWords:
+     if popularWords[word] > analyzeGoal*2 and word_is_interesting(word):
+          good_words_array.append((word, popularWords[word]))
+for i in range(len(good_words_array)):
+     for j in range(len(good_words_array)-i):
+          if((good_words_array[i])[1]<(good_words_array[i+j])[1]):
+               tmp = good_words_array[i]
+               good_words_array[i] = good_words_array[i+j]
+               good_words_array[i+j] = tmp
+for i in range(len(good_words_array)):
+     print(good_words_array[i])
+print("")
+print("")
+print("Analyzed [", number_of_words, "] words about [", search_term, "] in [", str(datetime.now()-start)[5:], "] seconds!")
