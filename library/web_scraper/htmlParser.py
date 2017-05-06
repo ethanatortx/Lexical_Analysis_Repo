@@ -104,7 +104,7 @@ def analyze(article, searchTerm, followLinks):
           print(sentence)
      for i in arrOfSentences:
            if check_conditions(i):
-                for word in sentence:
+               for word in sentence:
                     if( myDict[word] == None):
                          myDict[word] = 0
                     myDict[word]+1
