@@ -12,7 +12,9 @@ public:
 	article(std::string artName);
 
 	std::string link() const;
-	std::string sentence(unsigned&& loc) const;
+	std::string text() const;
+	std::string operator[](int&& loc) const;
+	std::string sentence(int&& loc) const;
 
 	friend std::ostream& operator<<(std::ostream& os, const article& a);
 
