@@ -113,6 +113,8 @@ def analyze(article, search_term, followLinks):
                #Make sure not to add two spaces in a row
 
      text_file = open(fixedTitle+".txt", "w")
+     text_file.write(article)
+     text_file.write('\n\n')
      #Make a text file
      global dictionary_of_sentences
      dictionary_of_sentences.append(array_of_sentences)
