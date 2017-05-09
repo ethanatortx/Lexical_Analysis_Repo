@@ -19,4 +19,28 @@ std::vector<std::string> split_string(std::string s, const char delim)
 	return svec;
 }
 
+std::vector<std::string> split_string(std::string s, const char* delims, unsigned delimC)
+{
+	std::vector<std::string> svec;
+	std::string frac;
+
+	for(std::string::iterator i = s.begin(); i != s.end(); ++i)
+	{
+		for(unsigned q = 0; q < delimC; ++q)
+		{
+			if((*i) == delims[q])
+			{
+				svec.push_back(frac);
+				frac.clear();
+				++i;
+				break;
+			}
+		}
+
+		frac.append(1, *i);
+	}
+
+	return svec;
+}
+
 #endif

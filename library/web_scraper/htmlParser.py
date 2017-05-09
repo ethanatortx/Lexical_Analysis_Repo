@@ -132,7 +132,6 @@ else:
      time.sleep(1000)
 start = datetime.now()
 
-q = 'https://www.google.com/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8#safe=strict&tbm=nws&q=senate'
 q = "https://news.google.com/news?q=" + search_term.replace(" ", "+") + "&output=rss"
 q.encode('utf-8').strip()
 listOfArticles = []
@@ -155,7 +154,7 @@ while pos < len(html) and number_analyzed_articles < analyzeGoal:
                     analyze(tempStr, search_term, False)
                     number_analyzed_articles+=1
                except:
-                    number_analyzed_articles -=1
+                    print("failed analysis")
      pos+=1
 
 popularWords = { }
