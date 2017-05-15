@@ -116,8 +116,6 @@ def analyze(article, search_term, followLinks):
      text_file.write(article)
      text_file.write('\n\n')
      #Make a text file
-     global dictionary_of_sentences
-     dictionary_of_sentences.append(array_of_sentences)
      for sentence in array_of_sentences:
           if sentence_is_good(sentence):
                text_file.write(sentence)
@@ -158,35 +156,3 @@ while pos < len(html) and number_analyzed_articles < analyzeGoal:
                except:
                     print("failed analysis")
      pos+=1
-
-popularWords = { }
-
-number_of_words = 0
-for article in dictionary_of_sentences:
-     for sentence in article:
-          for word in sentence.split(" "):
-               number_of_words+=1
-               try:
-                    if(popularWords[word.lower()]):            
-                         popularWords[word.lower()]+=1
-                    else:
-                         popularWords[word.lower()]=1
-               except:
-                    if len(word)<10 and len(word)>2 and "<" not in word and ">" not in word:
-                         popularWords[word.lower()] = 1
-
-good_words_array = []
-for word in popularWords:
-     if popularWords[word] > analyzeGoal*2 and word_is_interesting(word):
-          good_words_array.append((word, popularWords[word]))
-for i in range(len(good_words_array)):
-     for j in range(len(good_words_array)-i):
-          if((good_words_array[i])[1]<(good_words_array[i+j])[1]):
-               tmp = good_words_array[i]
-               good_words_array[i] = good_words_array[i+j]
-               good_words_array[i+j] = tmp
-for i in range(len(good_words_array)):
-     print(good_words_array[i])
-print("")
-print("")
-print("Analyzed [", number_of_words, "] words about [", search_term, "] in [", str(datetime.now()-start)[5:], "] seconds!")
