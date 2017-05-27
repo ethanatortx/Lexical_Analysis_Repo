@@ -1,27 +1,27 @@
 #include <iostream>
+#include <fstream>
 #include <string>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <vector>
-using namespace std;
 
-int countSubstring(const string& str, const string& sub)
+int countSubstring(const std::string& str, const std::string& sub)
 {
 	if(sub.length()== 0) 
 		return 0;
 	int count = 0;
-	for(int offset = str.find(sub); offset != string::npos; offset = str.find(sub,offset + sub.length())) 
+	for(int offset = str.find(sub); offset != std::string::npos; offset = str.find(sub,offset + sub.length())) 
 	{
 		++count;
 	}
 	return count;
 }
 
-int uniqueWords(const string& str) 
+int uniqueWords(const std::string& str) 
 {	
-	string Total = "";
-	string concat = "";
+	std::string Total = "";
+	std::string concat = "";
 	int z = 0;
 	for(int i = 0; i < str.length(); i++)
 	{
@@ -40,52 +40,44 @@ int uniqueWords(const string& str)
 			concat += str[i];
 		}
 	}
-	cout << z;
+	std::cout << z;
 	return z;
 }
 
-string readIn(string source)
+std::string readIn(std::string source)
 {
-	//source = "Donald Trump arrives in Bethlehem for talks with Abbas    Palestine News   Al Jazeera.txt";
-	ifstream infile;
-	string result;
-	string final;
-	string sentence;
-	infile.open(source, ifstream::in);
+	//source = "Donald Trump arrives in Bethlehem for talks with Abbas    Palestine News   Al Jazeera.txt"
+	std::ifstream infile;
+	std::string sentence, final;
+	infile.open(source);
 	if(infile.is_open())
 	{
-		while(getline(source, sentence))
+		while(getline(infile, sentence, '\n'))
 		{
-			for(int i = 0; i < sentence; i++)
-			{
-				char c = sentence[i];
-				final = final + " " + c;
-			}
-
+			final.append(sentence);
 		}
 		infile.close();
 	}
-	else{cout << "ERROR BEOTCH";}
 }
 
 
 
 int main()
 {
-	cout << "Which file would you like to display?";
-	string open;
-	cin >> open;
-	string source = readIn("Donald Trump arrives in Bethlehem for talks with Abbas    Palestine News   Al Jazeera.txt");
+	std::cout << "Which file would you like to display?";
+	std::string open;
+	std::cin >> open;
+	std::string source = readIn("Donald Trump arrives in Bethlehem for talks with Abbas    Palestine News   Al Jazeera.txt");
 	int totWords = countSubstring(source, " ") + 1;
 	int sentances = countSubstring(source, ".");
-	cout << "substring count: " << countSubstring(source, "is") << '\n';
-	cout << "number of words: " << countSubstring(source, " ")  + 1 << '\n';
-	cout << "number of sentances: " << countSubstring(source, ".") << '\n';
-	cout << "words per sentance is: " << (double)totWords/sentances << '\n';
+	std::cout << "substring count: " << countSubstring(source, "is") << '\n';
+	std::cout << "number of words: " << countSubstring(source, " ")  + 1 << '\n';
+	std::cout << "number of sentances: " << countSubstring(source, ".") << '\n';
+	std::cout << "words per sentance is: " << (double)totWords/sentances << '\n';
 	double uniWord = uniqueWords(source) + 1;
 	double fin = uniWord / (countSubstring(source, " ")  + 1);
 	double finfin = fin * 100;
-	cout << "Lexical Analysis is: " << finfin;
+	std::cout << "Lexical Analysis is: " << finfin;
 
 return 0;
 }

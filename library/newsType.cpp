@@ -40,3 +40,8 @@ std::string article::sentence(int&& loc) const
 		sent.append(*i);
 	return sent;
 }
+
+std::ostream& operator<<(std::ostream& os, const article& a)
+{
+	
+}
