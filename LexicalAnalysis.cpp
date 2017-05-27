@@ -65,7 +65,7 @@ string readIn(string source)
 		}
 		infile.close();
 	}
-	else{cout << "ERROR BEOTCH";}
+	else{cout << "ERROR";}
 }
 
 
@@ -75,7 +75,7 @@ int main()
 	cout << "Which file would you like to display?";
 	string open;
 	cin >> open;
-	string source = readIn("Donald Trump arrives in Bethlehem for talks with Abbas    Palestine News   Al Jazeera.txt");
+	string source = readIn(open);
 	int totWords = countSubstring(source, " ") + 1;
 	int sentances = countSubstring(source, ".");
 	cout << "substring count: " << countSubstring(source, "is") << '\n';

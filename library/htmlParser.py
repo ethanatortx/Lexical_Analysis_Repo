@@ -38,7 +38,7 @@ def analyze(article, search_term, followLinks):
      try:
           response = u.urlopen(article)
      except:
-          return
+          return False
      #Try to open the page. If it doesn't work, exit the page.
 
      html = response.read().decode()
@@ -102,7 +102,7 @@ def analyze(article, search_term, followLinks):
      #Todo... replace this with actual regex
      title = h.unescape(title)
      if ("google plus" in title or "facebook" in title or search_term.lower() not in title.lower()):
-          return
+          return False
      fixedTitle = ""
      for i in title:
           if i.lower() in 'abcdefghijklmnopqrstuvwxyz1234567890\':':
@@ -124,6 +124,7 @@ def analyze(article, search_term, followLinks):
                text_file.write('\n\n')
      text_file.close()
      print("Analyzed: " + title)
+     return True
 search_term = input("Search Term: ")
 analyzeGoal = 5
 numberArticles = input("Analyze how many articles? ")
@@ -144,6 +145,7 @@ html = response.read()
 html = html.decode()
 pos = 0
 number_analyzed_articles = 0
+number_failed_analysis = 0
 while pos < len(html) and number_analyzed_articles < analyzeGoal:
      if (html[pos:pos+4] == "http"):
           tempStr = ""
@@ -154,14 +156,16 @@ while pos < len(html) and number_analyzed_articles < analyzeGoal:
                #Note: The New York Times doesn't play nice with Python's urllib
                #At one point, the New York Times was banned as a source
                try:
-                    analyze(tempStr, search_term, False)
-                    number_analyzed_articles+=1
+                    if analyze(tempStr, search_term, False):
+                         number_analyzed_articles+=1
                except:
-                    number_analyzed_articles -=1
+                    number_failed_analysis += 1
      pos+=1
 
 popularWords = { }
-
+print("")
+print(" Common Words ")
+print("")
 number_of_words = 0
 for article in dictionary_of_sentences:
      for sentence in article:
@@ -170,6 +174,8 @@ for article in dictionary_of_sentences:
                     word = w.split("’")[0]
                elif(w.split("'")[0] != w):
                     word = w.split("'")[0]
+               elif(w.split(".")[0] != w):
+                    word = w.split(".")[0]
                else:
                     word = w
                number_of_words+=1
@@ -194,8 +200,9 @@ for i in range(len(good_words_array)):
 count = 0
 for i in range(len(good_words_array)):
      count+=1
-     if count < len(good_words_array)/3 :
+     if count < len(good_words_array)/2 :
           print(good_words_array[i])
 print("")
 print("")
 print("Analyzed [", number_of_words, "] words about [", search_term, "] in [", str(datetime.now()-start)[5:], "] seconds!")
+print("With ", number_failed_analysis, " failed links")
