@@ -197,10 +197,17 @@ for i in range(len(good_words_array)):
                good_words_array[i] = good_words_array[i+j]
                good_words_array[i+j] = tmp
 count = 0
+w_f = open("WordFrequency.txt", "w")
 for i in range(len(good_words_array)):
      count+=1
      if count < len(good_words_array)/2 :
           print(good_words_array[i])
+          w_f.write(str(good_words_array[i][0]))
+          w_f.write(" ")
+          w_f.write(str(good_words_array[i][1]))
+          w_f.write("\n")
+w_f.close()         
+          
 print("")
 print("")
 print("Analyzed [", number_of_words, "] words about [", search_term, "] in [", str(datetime.now()-start)[5:], "] seconds!")
