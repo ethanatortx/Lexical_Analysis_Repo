@@ -87,6 +87,7 @@ int main()
 	{
 		while(std::getline(infile, open, '\n' ))
 		{
+			open.append(".txt");
 			std::string source = readIn(open);
 			lexicalAnalyis(source);
 		}
