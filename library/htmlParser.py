@@ -3,12 +3,14 @@ try:
      # Python 2.6-2.7 
      from HTMLParser import HTMLParser
 except ImportError:
-     # Python 3
+     # Python 3h
      from html.parser import HTMLParser
 import urllib.request as u
 import csv
 global dictionary_of_sentences
+global text_doc_names
 dictionary_of_sentences = [ ]
+text_doc_names = [ ]
 def word_is_interesting(word):
      listOfBad = ["a", "an", "the", "or", "he", "her", "they", "but", "who", "has", "for", "from", "and", "was", "your", "you", "that", "have", "with", "his", "her", "this", "will", "our", "not", "all", "than", "how", "since", "also", "about", "still", "had", "been", "can", "it", "its", "it's", "are", "were"]
      for w in listOfBad:
@@ -124,6 +126,7 @@ def analyze(article, search_term, followLinks):
                text_file.write('\n\n')
      text_file.close()
      print("Analyzed: " + title)
+     text_doc_names.append(title)
      return True
 search_term = input("Search Term: ")
 analyzeGoal = 5
@@ -206,3 +209,8 @@ print("")
 print("")
 print("Analyzed [", number_of_words, "] words about [", search_term, "] in [", str(datetime.now()-start)[5:], "] seconds!")
 print("With ", number_failed_analysis, " failed links")
+text_file = open("settings.txt", "w")
+for doc in text_doc_names:
+     text_file.write(doc)
+     text_file.write("\n")
+text_file.close()
