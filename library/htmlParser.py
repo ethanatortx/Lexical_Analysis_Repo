@@ -169,7 +169,7 @@ for article in dictionary_of_sentences:
           for word in sentence.split(" "):
                number_of_words+=1
                try:
-                    if(popularWords[word.lower()]):            
+                    if(popularWords[word.lower()]):     
                          popularWords[word.lower()]+=1
                     else:
                          popularWords[word.lower()]=1
