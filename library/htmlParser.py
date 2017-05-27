@@ -10,7 +10,7 @@ import csv
 global dictionary_of_sentences
 dictionary_of_sentences = [ ]
 def word_is_interesting(word):
-     listOfBad = ["a", "an", "the", "or", "he", "her", "they", "but", "who", "has", "for", "from", "and", "was", "your", "you", "that", "have", "with", "his", "her", "this", "will", "our", "not", "all", "than", "how", "since", "also", "about", "still", "had", "been", "can", "its", "it's", "are", "were"]
+     listOfBad = ["a", "an", "the", "or", "he", "her", "they", "but", "who", "has", "for", "from", "and", "was", "your", "you", "that", "have", "with", "his", "her", "this", "will", "our", "not", "all", "than", "how", "since", "also", "about", "still", "had", "been", "can", "it", "its", "it's", "are", "were"]
      for w in listOfBad:
           if w.lower()==word.lower():
                return False
@@ -165,17 +165,22 @@ popularWords = { }
 number_of_words = 0
 for article in dictionary_of_sentences:
      for sentence in article:
-          for word in sentence.split(" "):
+          for w in sentence.split(" "):
+               if(w.split("’")[0] != w):
+                    word = w.split("’")[0]
+               elif(w.split("'")[0] != w):
+                    word = w.split("'")[0]
+               else:
+                    word = w
                number_of_words+=1
                try:
-                    if(popularWords[word.lower()]):            
+                    if(popularWords[word.lower()]):
                          popularWords[word.lower()]+=1
                     else:
                          popularWords[word.lower()]=1
                except:
                     if len(word)<10 and len(word)>2 and "<" not in word and ">" not in word:
                          popularWords[word.lower()] = 1
-
 good_words_array = []
 for word in popularWords:
      if popularWords[word] > analyzeGoal*2 and word_is_interesting(word):
