@@ -49,15 +49,19 @@ std::string readIn(std::string source)
 	//source = "Donald Trump arrives in Bethlehem for talks with Abbas    Palestine News   Al Jazeera.txt"
 	std::ifstream infile;
 	std::string sentence, final;
+	int count = 0;
 	infile.open(source);
 	if(infile.is_open())
 	{
-		while(getline(infile, sentence, '\n'))
+		std::cout << "Pass " << ++count << "...\n";
+		while(std::getline(infile, sentence, '\n'))
 		{
 			final.append(sentence);
 		}
 		infile.close();
 	}
+
+	return final;
 }
 
 
@@ -67,7 +71,7 @@ int main()
 	std::cout << "Which file would you like to display?";
 	std::string open;
 	std::cin >> open;
-	std::string source = readIn("Donald Trump arrives in Bethlehem for talks with Abbas    Palestine News   Al Jazeera.txt");
+	std::string source = readIn(open);
 	int totWords = countSubstring(source, " ") + 1;
 	int sentances = countSubstring(source, ".");
 	std::cout << "substring count: " << countSubstring(source, "is") << '\n';
