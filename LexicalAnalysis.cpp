@@ -57,8 +57,9 @@ std::string readIn(std::string source)
 		}
 		infile.close();
 	}
-	else
-		std::cout << "Error Opening File";
+	else{
+		std::cout << "Error Opening File" << std::endl;
+	}
 
 	return final;
 }
@@ -87,14 +88,13 @@ int main()
 	{
 		while(std::getline(infile, open, '\n' ))
 		{
-			open.append(".txt");
-			std::string source = readIn(open);
+			std::string source = readIn(open+".txt");
 			lexicalAnalyis(source);
 		}
-		infile.close()
+		infile.close();
 	}
 	else
-		std::cout << "Error Opening File";
+		std::cout << "Error Opening Settings File";
 
 	
 	return 0;
