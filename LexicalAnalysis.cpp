@@ -22,7 +22,7 @@ int uniqueWords(const std::string& str)
 {	
 	std::string Total = "";
 	std::string concat = "";
-	int z = 0;
+	int z = 1;
 	for(int i = 0; i < str.length(); i++)
 	{
 		if(str[i] == ' ' || i == str.length()-1) {
@@ -64,7 +64,7 @@ std::string readIn(std::string source)
 	return final;
 }
 
-void lexicalAnalyis(std::string source)
+void lexicalAnalyis(std::string source, std::string open)
 {
 	int totWords = countSubstring(source, " ") + 1;
 	int sentances = countSubstring(source, ".");
@@ -72,10 +72,19 @@ void lexicalAnalyis(std::string source)
 	std::cout << "number of words: " << countSubstring(source, " ")  + 1 << '\n';
 	std::cout << "number of sentances: " << countSubstring(source, ".") << '\n';
 	std::cout << "words per sentance is: " << (double)totWords/sentances << '\n';
-	double uniWord = uniqueWords(source) + 1;
+	double uniWord = uniqueWords(source);
 	double fin = uniWord / (countSubstring(source, " ")  + 1);
 	double finfin = fin * 100;
-	std::cout << "Lexical Analysis is: " << finfin;
+	if(finfin < 100)
+	{
+		std::cout << "Lexical Analysis is: " << finfin;
+		std::cout << " for article " << std::endl << open << std::endl << std::endl;
+	}
+	else
+	{
+		std:: cout << "This article does not contain proper words" << std::endl << std::endl;
+	}
+	
 }
 
 int main()
@@ -88,8 +97,9 @@ int main()
 	{
 		while(std::getline(infile, open, '\n' ))
 		{
+
 			std::string source = readIn(open+".txt");
-			lexicalAnalyis(source);
+			lexicalAnalyis(source, open);
 		}
 		infile.close();
 	}
