@@ -202,10 +202,10 @@ for i in range(len(good_words_array)):
      count+=1
      if count < len(good_words_array)/2 :
           print(good_words_array[i])
-          w_f.write(str(good_words_array[i][0]))
-          w_f.write(" ")
-          w_f.write(str(good_words_array[i][1]))
-          w_f.write("\n")
+     w_f.write(str(good_words_array[i][0]))
+     w_f.write(" ")
+     w_f.write(str(good_words_array[i][1]))
+     w_f.write("\n")
 w_f.close()         
           
 print("")
