@@ -109,11 +109,6 @@ def analyze(article, search_term, followLinks):
      for i in title:
           if i.lower() in 'abcdefghijklmnopqrstuvwxyz1234567890\':':
                fixedTitle+=i
-          else:
-               if(fixedTitle[:-1] != " "):
-                    fixedTitle+=" "
-               #Make sure not to add two spaces in a row
-
      text_file = open(fixedTitle+".txt", "w")
      text_file.write(article)
      text_file.write('\n\n')     
@@ -126,7 +121,8 @@ def analyze(article, search_term, followLinks):
                text_file.write('\n\n')
      text_file.close()
      print("Analyzed: " + title)
-     text_doc_names.append(title)
+     global text_doc_names
+     text_doc_names.append(fixedTitle)
      return True
 search_term = input("Search Term: ")
 analyzeGoal = 5
@@ -210,7 +206,9 @@ print("")
 print("Analyzed [", number_of_words, "] words about [", search_term, "] in [", str(datetime.now()-start)[5:], "] seconds!")
 print("With ", number_failed_analysis, " failed links")
 text_file = open("settings.txt", "w")
+text_doc_names
 for doc in text_doc_names:
+     print(doc)
      text_file.write(doc)
      text_file.write("\n")
 text_file.close()
