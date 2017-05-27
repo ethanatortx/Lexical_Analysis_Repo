@@ -10,20 +10,20 @@ import csv
 global dictionary_of_sentences
 dictionary_of_sentences = [ ]
 def word_is_interesting(word):
-     uninteresting_words = ["a", "an", "the", "or", "he", "her", "they", "but", "who", "has", "for", "from", "and", "was", "your", "you", "that", "have", "with", "his", "her", "this", "will", "our", "not", "all", "than", "how", "since", "also", "about", "still", "had", "been", "can", "its", "it's", "are", "were"]
-     for bad_word in uninteresting_words:
-          if bad_word.lower()==word.lower():
+     listOfBad = ["a", "an", "the", "or", "he", "her", "they", "but", "who", "has", "for", "from", "and", "was", "your", "you", "that", "have", "with", "his", "her", "this", "will", "our", "not", "all", "than", "how", "since", "also", "about", "still", "had", "been", "can", "its", "it's", "are", "were"]
+     for w in listOfBad:
+          if w.lower()==word.lower():
                return False
      return True
 
 def sentence_is_good(toCheck):
      if (toCheck == toCheck.upper()):
           return False
-     banned_words = ['©', 'copyright', 'writen by', 'newsletter', 'password', 'subscribe']
+     banned_words = ['copyright', 'writen by', 'newsletter', 'password', 'subscribe']
      for phrase in banned_words:
           if(phrase.lower() in toCheck.lower()):
                return False
-     banned_groups = [ ['©', 'create', 'new', 'password'], ['all', 'rights', 'reserved'], ['Please', 'confirm', 'the', 'information', 'below'], ['readers', 'like', 'you'], ['read', 'our'], ['cookie', 'advertising', 'policy'], ['disable', 'ad', 'blocker'], ['share', 'this', 'video'], ['watch', 'this', 'video'], ['watch', 'next'], ['sign', 'in'], ['copy', 'this', 'your', 'clipboard'] ]
+     banned_groups = [ ['create', 'new', 'password'], ['all', 'rights', 'reserved'], ['Please', 'confirm', 'the', 'information', 'below'], ['readers', 'like', 'you'], ['read', 'our'], ['cookie', 'advertising', 'policy'], ['disable', 'ad', 'blocker'], ['share', 'this', 'video'], ['watch', 'this', 'video'], ['watch', 'next'], ['sign', 'in'], ['copy', 'this', 'your', 'clipboard'] ]
      for group in banned_groups:
           strikes = 0
           for item in group:
@@ -113,16 +113,15 @@ def analyze(article, search_term, followLinks):
                #Make sure not to add two spaces in a row
 
      text_file = open(fixedTitle+".txt", "w")
+     text_file.write(article)
+     text_file.write('\n\n')     
      #Make a text file
      global dictionary_of_sentences
      dictionary_of_sentences.append(array_of_sentences)
-     is_first_sentence = True
      for sentence in array_of_sentences:
-          if not is_first_sentence:
-               if sentence_is_good(sentence):
-                    text_file.write(sentence)
-                    text_file.write('\n\n')
-          is_first_sentence = False
+          if sentence_is_good(sentence):
+               text_file.write(sentence)
+               text_file.write('\n\n')
      text_file.close()
      print("Analyzed: " + title)
 search_term = input("Search Term: ")
@@ -169,7 +168,7 @@ for article in dictionary_of_sentences:
           for word in sentence.split(" "):
                number_of_words+=1
                try:
-                    if(popularWords[word.lower()]):     
+                    if(popularWords[word.lower()]):            
                          popularWords[word.lower()]+=1
                     else:
                          popularWords[word.lower()]=1
@@ -187,8 +186,11 @@ for i in range(len(good_words_array)):
                tmp = good_words_array[i]
                good_words_array[i] = good_words_array[i+j]
                good_words_array[i+j] = tmp
+count = 0
 for i in range(len(good_words_array)):
-     print(good_words_array[i])
+     count+=1
+     if count < len(good_words_array)/3 :
+          print(good_words_array[i])
 print("")
 print("")
 print("Analyzed [", number_of_words, "] words about [", search_term, "] in [", str(datetime.now()-start)[5:], "] seconds!")
