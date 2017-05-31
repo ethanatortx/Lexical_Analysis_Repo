@@ -198,6 +198,8 @@ for i in range(len(good_words_array)):
                good_words_array[i+j] = tmp
 count = 0
 w_f = open("WordFrequency.txt", "w")
+w_f.write(str(len(good_words_array)))
+w_f.write("\n")
 for i in range(len(good_words_array)):
      count+=1
      if count < len(good_words_array)/2 :
@@ -206,7 +208,7 @@ for i in range(len(good_words_array)):
      w_f.write(" ")
      w_f.write(str(good_words_array[i][1]))
      w_f.write("\n")
-w_f.close()         
+w_f.close()
           
 print("")
 print("")

@@ -24,26 +24,21 @@ HuffmanEncode::~HuffmanEncode()
 
 // Create a histogram of the symbols occuring in the file
 
-void HuffmanEncode::histogram(std::string input, 
-	Symbol* sym, 
-	uint32_t size)
+void HuffmanEncode::histogram(std::string* input, 
+	int* freq, 
+	Symbol* sym)
 {
 	int i;
 
-	for (i = 0; i < 256; ++i)
+	for (i = 0; i < sizeof(input)/sizeof(input[0]); ++i)
 	{
-		sym[i].Symbol = i;
-		sym[i].Count = 0;
+		sym[i].Symbol = input[i];
+		sym[i].Number = i;
+		sym[i].Count = freq[i];
 		sym[i].Code = "";
 		sym[i].Bits = 0;
 	}
 
-	for (i = 0; i<input.size(); i++)
-	{
-		char c = input[i];
-		sym[(int)c].Count++;
-
-	}
 	printIt(sym);
 }
 
@@ -76,6 +71,7 @@ void HuffmanEncode::makeTree(Symbol* sym, BitStream* stream)
 		huffNode* node = new huffNode;
 		node->Count = sym[i].Count;
 		node->Symbol = sym[i].Symbol;
+		node->Number = sym[i].Number;
 		node->IsBottom = true;
 		if(sym[i].Count > 0){
 			pqueue.push(node);
@@ -125,7 +121,7 @@ void HuffmanEncode::handle_tree(huffNode* p,
 			new_symbol.Count = p->Count;
 			new_symbol.Code = s;
 			new_symbol.Bits = indent;
-			sym[new_symbol.Symbol] = new_symbol;
+			sym[new_symbol.Number] = new_symbol;
 	        return;
         }
         cout<< p->Count << "\n";
@@ -154,17 +150,17 @@ void HuffmanEncode::traverse_main(Symbol* sym,
 	b.push_back(a);
     if(n != NULL) {
         if(n->IsBottom){
-			sym[n->Symbol].Bits = b.size();
+			sym[n->Number].Bits = b.size();
 			std::cout << "\n";
 			for(int i = 0; i < b.size(); i++){
 				if(b.at(i)){
-					sym[n->Symbol].Code += "1";
+					sym[n->Number].Code += "1";
 				} else {
-					sym[n->Symbol].Code += "0";
+					sym[n->Number].Code += "0";
 				}
 //				std::cout << sym[n->Symbol].Code.size() << " " << n->Symbol << "\n";
 			}
-			std::cout << sym[n->Symbol].Code << "\n\n";
+			std::cout << sym[n->Number].Code << "\n\n";
 	        return;
         }
         cout<< n->Count << "\n ";
@@ -189,19 +185,14 @@ void HuffmanEncode::traverse_main(Symbol* sym,
 
 
 
-int HuffmanEncode::Compress(std::string input, 
-	uint8_t* output, 
-	uint32_t inputSize)
+int HuffmanEncode::Compress(std::string* input, 
+	int* freq)
 {
 	Symbol sym[256], temp;
 	BitStream stream;
 	uint32_t i, totalBytes, symbol;
 
-	if (inputSize < 1){
-		return 0;
-	}
-
-	histogram(input, sym, inputSize);
+	histogram(input, freq, sym);
 	makeTree(sym, &stream);
 	
 	// Diagnostic print
@@ -210,7 +201,7 @@ int HuffmanEncode::Compress(std::string input,
 		if (sym[i].Bits > 0)
 		{
 			std::cout << 
-			"Symbol: " << (char)sym[i].Symbol << 
+			"Symbol: " << sym[i].Symbol << 
 			", Code: " << sym[i].Code << 
 			", Bits: " << sym[i].Bits << 
 			", Num: " << i << std::endl;
@@ -218,24 +209,4 @@ int HuffmanEncode::Compress(std::string input,
 	}
 	std::cout << "\n\n";
 	// End: Diagnostic print
-	totalBytes = 0;
-	for (i = 0; i < inputSize; ++i)
-	{
-		symbol = input[i];
-		std::cout << 
-		"Symbol: " << (char)symbol << 
-		", Code: " << sym[symbol].Code << 
-		", Bits: " << sym[symbol].Bits << 
-		", Num: " << symbol << std::endl;
-		totalBytes+=sym[symbol].Bits;
-	}
-
-	if (stream.BitPosition > 0)
-	{
-		++totalBytes;
-	}
-
-	return totalBytes;
 }
-
-

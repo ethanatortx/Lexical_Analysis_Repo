@@ -4,12 +4,16 @@
 /***********************************************/
 
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <vector>
 #include <stdio.h>
 #include <string.h>
 #include "BitOperations.h"
 #include "HuffmanEncode.h"
-
-using namespace std;
 
 #define MAX_TREE_NODES 511
 
@@ -19,14 +23,27 @@ typedef unsigned int uint32_t;
 int main()
 {
 	
-	HuffmanEncode* he = new HuffmanEncode();
-	
-	const char* str = "The quick brown fox jumped over the lazy dog";
-	uint8_t* originalData = (uint8_t*)str;
-	int originalDataSize = strlen(str);
-	uint8_t* compressedData = new uint8_t[originalDataSize * (101 / 100) + 320];
+	std::ifstream infile;
+	std::string settings = "WordFrequency.txt";
+	std::string open;
+	infile.open(settings);
+	if(infile.is_open())
+	{
+		std::getline(infile, open, '\n');
+		int len = std::stoi( open );
+		std::string* arr = new std::string[len];
+		int* frequencies = new int[len];
+		for(int i=0; i<len; i++){
+			std::getline(infile, open, ' ');
+			arr[i] = open;
+			std::getline(infile, open, ' ');
+			frequencies[i] = std::stoi(open);
+		}
+		HuffmanEncode* he = new HuffmanEncode();
+		int compressedDataSize = he->Compress(arr, frequencies);
+	}
+	else
+		std::cout << "Error Opening Settings File";
 
-	int compressedDataSize = he->Compress(str, compressedData, originalDataSize);
-	cout << "Compressed size: " << compressedDataSize << endl;
 }
 

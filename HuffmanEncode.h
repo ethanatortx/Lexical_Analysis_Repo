@@ -13,17 +13,19 @@ class HuffmanEncode
 	
 public:
 	typedef struct {
-		int Symbol;
+		int Number;
+		std::string Symbol;
 		uint32_t Count;
 		std::string Code;
 		uint32_t Bits;
 	} Symbol;
 
 	typedef struct huffNode {
+		int Number;
 	    struct huffNode* ChildA;
 		struct huffNode* ChildB;
 		int Count;
-		int Symbol;
+		std::string Symbol;
 		bool IsBottom;
 	} huffNode;
 
@@ -31,10 +33,10 @@ public:
 	~HuffmanEncode();
 
 	void printIt(Symbol* sym);
-	void histogram(std::string input, Symbol* sym, uint32_t size);
+	void histogram(std::string* input, int* freq, Symbol* sym);
 	void makeTree(Symbol* sym, BitStream* stream);
 	void storeTree(huffNode* node, Symbol* sym, BitStream* stream, uint32_t code, uint32_t bits);
-	int Compress(std::string input, uint8_t* output, uint32_t inputSize);
+	int Compress(std::string* input, int* freq);
 	void traverse_root(Symbol* sym, huffNode* r);
 	void handle_tree(huffNode* p, int indent, std::string s, Symbol* sym);
 	void traverse_main(Symbol* sym, huffNode* n, std::vector<bool> b, bool a);
@@ -50,10 +52,4 @@ public:
 
 
 };
-/*
-inline bool operator<(const HuffmanEncode::huffNode& lhs, const HuffmanEncode::huffNode& rhs)
-{
-	return lhs.Count > rhs.Count;
-}
-*/
 #endif // HUFFMANENCODE_H
